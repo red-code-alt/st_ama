@@ -1,0 +1,11 @@
+core: 7.x
+api: 2
+projects:
+  drupal:
+    version: '7.82'
+  drafty:
+    version: 1.0-rc1
+  entity:
+    version: '1.9'
+  workbench_moderation:
+    version: '3.0'

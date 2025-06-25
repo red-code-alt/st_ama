@@ -1,0 +1,31 @@
+id: d7_pm_field_collection_type
+label: Paragraphs - Field Collection type configuration
+migration_tags:
+  - Drupal 7
+  - Configuration
+source:
+  plugin: d7_pm_field_collection_type
+  add_description: true
+  constants:
+    field_prefix_regex: '/^field_/'
+    field_prefix_replacement: ''
+process:
+  id:
+    -
+      plugin: callback
+      callable: preg_replace
+      source:
+        - constants/field_prefix_regex
+        - constants/field_prefix_replacement
+        - field_name
+      unpack_source: true
+    -
+      plugin: make_unique_entity_field
+      entity_type: paragraphs_type
+      field: id
+      postfix: _
+      length: 29
+  label: name
+  description: description
+destination:
+  plugin: 'entity:paragraphs_type'

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ruleset name="AcquiaMigrate">
+
+  <description>PHP CodeSniffer configuration for the Acquia Migrate Accelerate module.</description>
+
+  <arg name="colors"/>
+
+  <file>.</file>
+
+  <exclude-pattern>*\.js$</exclude-pattern>
+  <exclude-pattern>vendor/*</exclude-pattern>
+  <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+  <rule ref="AcquiaDrupalStrict">
+    # @todo Remove this exclusion and update the code.
+    <exclude name="SlevomatCodingStandard.ControlStructures.RequireNullCoalesceOperator"/>
+    # All uses of unserialize() in this module are for migration purposes.
+    <exclude name="DrupalPractice.FunctionCalls.InsecureUnserialize.InsecureUnserialize"/>
+  </rule>
+
+</ruleset>

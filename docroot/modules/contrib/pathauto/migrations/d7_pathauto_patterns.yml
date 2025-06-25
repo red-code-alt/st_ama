@@ -1,0 +1,71 @@
+id: d7_pathauto_patterns
+label: Pathauto patterns
+migration_tags:
+  - Drupal 7
+  - Configuration
+deriver: Drupal\pathauto\Plugin\migrate\PathautoPatternDeriver
+source:
+  plugin: pathauto_pattern
+  constants:
+    status: true
+    selection_logic: 'and'
+    type_prefix: 'canonical_entities'
+process:
+  status: constants/status
+  id: id
+  entity_type:
+    -
+      plugin: skip_on_empty
+      source: entity_type
+      method: row
+    -
+      plugin: static_map
+      bypass: true
+      map: {  }
+  bundle:
+    -
+      plugin: skip_on_empty
+      source: bundle
+      method: process
+    -
+      # This plugin checks if the pattern being migrated belongs to the taxonomy
+      # vocabulary used by Forum. If so, we use the machine name that Forum
+      # expects. Otherwise, we leave it unchanged.
+      plugin: pathauto_forum_vocabulary
+      machine_name: forums
+  label:
+    plugin: pathauto_pattern_label
+    source:
+      - '@entity_type'
+      - '@bundle'
+      - langcode
+  type:
+    plugin: concat
+    source:
+      - constants/type_prefix
+      - '@entity_type'
+    delimiter: ':'
+  pattern:
+    plugin: callback
+    source: value
+    callable: unserialize
+  selection_criteria:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: '@bundle'
+    -
+      plugin: pathauto_pattern_selection_criteria
+      source:
+        - '@entity_type'
+        - '@bundle'
+        - langcode
+  selection_logic: constants/selection_logic
+  relationships:
+    plugin: pathauto_pattern_relationships
+    source:
+      - '@entity_type'
+      - langcode
+  weight: weight
+destination:
+  plugin: 'entity:pathauto_pattern'

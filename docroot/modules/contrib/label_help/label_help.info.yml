@@ -1,0 +1,9 @@
+name: Label Help
+type: module
+description: Creates the help text directly below the label in form fields
+core_version_requirement: ^8 || ^9
+
+# Information added by Drupal.org packaging script on 2021-10-27
+version: '8.x-1.0'
+project: 'label_help'
+datestamp: 1635367019

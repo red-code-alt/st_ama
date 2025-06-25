@@ -1,0 +1,39 @@
+id: pm_multifield_translation_settings
+label: Multifield translation settings
+migration_tags:
+  - Drupal 7
+  - Configuration
+  - Multilingual
+deriver: Drupal\paragraphs_migration\Plugin\migrate\MultifieldConfigDeriver
+source:
+  plugin: pm_multifield_translation_settings
+  constants:
+    target_entity_type_id: paragraph
+    default_langcode: current_interface
+    language_alterable: true
+process:
+  target_entity_type_id: 'constants/target_entity_type_id'
+  target_bundle:
+    -
+      plugin: migration_lookup
+      migration: pm_multifield_type
+      no_stub: true
+      source: field_name
+    -
+      plugin: skip_on_empty
+      method: row
+  id:
+    plugin: concat
+    source:
+      - target_entity_type_id
+      - '@target_bundle'
+    delimiter: '.'
+  default_langcode: 'constants/default_langcode'
+  language_alterable: 'constants/language_alterable'
+  'third_party_settings/content_translation/enabled': translatable
+  'third_party_settings/content_translation/bundle_settings/untranslatable_fields_hide': untranslatable_fields_hide
+destination:
+  plugin: entity:language_content_settings
+migration_dependencies:
+  required:
+    - pm_multifield_type

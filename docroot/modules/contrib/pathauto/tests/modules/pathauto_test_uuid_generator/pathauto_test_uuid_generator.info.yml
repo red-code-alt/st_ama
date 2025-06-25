@@ -1,0 +1,3 @@
+name: 'UUID generator for pathauto migration tests'
+type: module
+package: Testing

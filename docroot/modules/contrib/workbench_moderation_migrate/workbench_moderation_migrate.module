@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * @file
+ * Contains hooks for Workbench Moderation Migrate module.
+ */
+
+declare(strict_types = 1);
+
+use Drupal\migrate\Plugin\MigrateSourceInterface;
+use Drupal\migrate\Plugin\MigrationInterface;
+use Drupal\migrate\Row;
+use Drupal\migrate_drupal\Plugin\migrate\source\DrupalSqlBase;
+use Drupal\workbench_moderation_migrate\ModerationStateMigrate;
+
+/**
+ * Implements hook_help().
+ */
+function workbench_moderation_migrate_help($route_name) {
+  switch ($route_name) {
+    case 'help.page.workbench_moderation_migrate':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>';
+      $output .= t(
+        'Workbench Moderation Migrate module migrates Drupal 7 Workbench Moderation flows to Drupal 9 core\'s Workflows and Content Moderation. See the <a href=":documentation">online documentation for Migrate Magician module</a>.',
+        [
+          ':documentation' => 'https://drupal.org/docs/contributed-modules/workbench-moderation-migrate',
+        ]
+      );
+      $output .= '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_migration_plugins_alter().
+ */
+function workbench_moderation_migrate_migration_plugins_alter(array &$migrations) {
+  $workbench_flow_migrations = array_filter(
+    $migrations,
+    function ($definition) {
+      return $definition['id'] === 'workbench_moderation_flow';
+    }
+  );
+  if (empty($workbench_flow_migrations)) {
+    return;
+  }
+
+  $moderated_node_types = array_reduce(
+    $workbench_flow_migrations,
+    function (array $carry, array $definition) {
+      $node_types = explode(',', $definition['source']['node_types_aggregated']);
+      $default_state = $definition['source']['default_state'];
+      $types_with_default_state = array_combine(
+        $node_types,
+        array_fill(0, count($node_types), "workbench_moderation_flow:$default_state")
+      );
+      $carry = array_merge($carry, $types_with_default_state);
+      return $carry;
+    },
+    []
+  );
+  if (empty($moderated_node_types)) {
+    return;
+  }
+
+  // Migrations of moderated node types should depend on
+  // "workbench_moderation_flow" migrations.
+  $node_complete_migrations = array_filter(
+    $migrations,
+    function ($definition) {
+      return $definition['destination']['plugin'] === 'entity_complete:node';
+    }
+  );
+  if (empty($node_complete_migrations)) {
+    return;
+  }
+  foreach ($node_complete_migrations as $id => $definition) {
+    $node_type = $definition['source']['node_type'];
+    if (!in_array($node_type, array_keys($moderated_node_types), TRUE)) {
+      continue;
+    }
+    $migrations[$id]['migration_tags'] = array_unique(
+      array_merge(
+        $definition['migration_tags'] ?? [],
+        [ModerationStateMigrate::MODERATED_NODE_MIGRATION_TAG]
+      )
+    );
+    $migrations[$id]['migration_dependencies']['required'] = array_unique(
+      array_merge(
+        $definition['migration_dependencies']['required'] ?? [],
+        [$moderated_node_types[$node_type]]
+      )
+    );
+  }
+
+  // Support derived node type migrations.
+  $node_type_migrations = array_filter(
+    $migrations,
+    function ($definition) {
+      return $definition['id'] === 'd7_node_type';
+    }
+  );
+  if (count($node_type_migrations) > 1) {
+    foreach ($workbench_flow_migrations as $id => $definition) {
+      $lookup_migrations = [];
+      $node_type_dep_key = array_search('d7_node_type', ($definition['migration_dependencies']['optional'] ?? []));
+      if ($node_type_dep_key !== FALSE) {
+        unset($migrations[$id]['migration_dependencies']['optional'][$node_type_dep_key]);
+      }
+
+      // Use more specific node type migration dependencies.
+      foreach (explode(',', $definition['source']['node_types_aggregated']) as $node_type) {
+        $derived_type_migration_id = "d7_node_type:{$node_type}";
+        if (!empty($node_type_migrations[$derived_type_migration_id])) {
+          $lookup_migrations[] = $derived_type_migration_id;
+          $migrations[$id]['migration_dependencies']['required'][] = $derived_type_migration_id;
+        }
+      }
+
+      if (!empty($migrations[$id]['process']['type_settings/entity_types/node'][0]['process']['node_type']['migration'])) {
+        $migrations[$id]['process']['type_settings/entity_types/node'][0]['process']['node_type']['migration'] = $lookup_migrations;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_migrate_prepare_row().
+ */
+function workbench_moderation_migrate_migrate_prepare_row(Row $row, MigrateSourceInterface $source, MigrationInterface $migration) {
+  if (
+    $migration->getDestinationPlugin()->getPluginId() !== 'entity_complete:node' ||
+    !in_array(ModerationStateMigrate::MODERATED_NODE_MIGRATION_TAG, $migration->getMigrationTags())
+  ) {
+    return;
+  }
+
+  if (!$source instanceof DrupalSqlBase) {
+    return;
+  }
+
+  ModerationStateMigrate::prepareModeratedNodeRow($row, $source->getDatabase());
+}

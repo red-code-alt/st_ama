@@ -1,0 +1,14 @@
+.messages.has-dismiss {
+  position: relative;
+
+  button {
+    position: absolute;
+    top: var(--space-l);
+    right: var(--space-l);
+    background: none;
+    border: none;
+    appearance: none;
+    font-size: 1.5rem;
+    color: var(--messages-fg-color);
+  }
+}

@@ -1,0 +1,12 @@
+name: Smart SQL ID Map
+type: module
+core_version_requirement: ^8.8 || ^9 || ^10 || ^11
+description: A SQL id Map for migrations with long plugin IDs
+package: Migration
+dependencies:
+  - drupal:migrate
+
+# Information added by Drupal.org packaging script on 2025-04-03
+version: '1.2.3'
+project: 'smart_sql_idmap'
+datestamp: 1743688405

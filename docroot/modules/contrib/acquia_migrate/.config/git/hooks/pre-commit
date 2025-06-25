@@ -1,0 +1,18 @@
+#!/bin/sh
+
+composer run-script composer-normalize-check; status=$?
+if test $status -ne 0; then
+  echo
+  echo "Run \`composer run-script composer-normalize\` and try again."
+  echo
+  exit 1
+fi
+
+composer run-script sniffs; status=$?
+if test $status -ne 0; then
+  read -p "Coding standard violations were found, would you like to proceed (y/n)? [n] " -n 1 -r commit < /dev/tty
+  echo
+  if [ "$commit" != "y" ]; then
+    exit 1
+  fi
+fi

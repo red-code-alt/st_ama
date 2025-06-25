@@ -1,0 +1,11 @@
+.migrate-ui__migration_detail .migration__preview .panel {
+  overflow-x: scroll;
+}
+
+.admin-list--panel .admin-item--panel {
+  position: relative;
+  display: block;
+  padding: 1rem 1.25rem;
+  background-color: transparent;
+  border: 1px solid #d2dce4;
+}

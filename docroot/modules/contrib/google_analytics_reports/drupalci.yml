@@ -1,0 +1,24 @@
+build:
+  assessment:
+    validate_codebase:
+      container_command:
+        commands:
+          - cd ${SOURCE_DIR}
+          - composer config minimum-stability dev
+          - rm composer.lock
+          - composer require google/analytics-data
+          - composer require --dev phpspec/prophecy-phpunit:*
+          - composer require phpunit/phpunit:~9.0 --with-all-dependencies
+      phplint:
+      csslint:
+        halt-on-fail: false
+      eslint:
+        halt-on-fail: false
+      phpcs:
+        sniff-all-files: false
+        halt-on-fail: false
+    testing:
+      run_tests.standard:
+        types: 'PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional'
+        testgroups: 'google_analytics_reports'
+        suppress-deprecations: true

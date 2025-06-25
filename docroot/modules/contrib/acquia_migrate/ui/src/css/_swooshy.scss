@@ -1,0 +1,106 @@
+$outer: 120px;
+$inner: 100px;
+
+$wave: $inner * 4;
+$borderOuterWidth: ($outer - $inner) / 2 * .7;
+$borderInnerWidth: ($outer - $inner) / 2 * .3;
+$bgColor: #003cc5;
+$fillColor: #b7c9f1;
+
+$topWave: 60px / 1200px * $inner * 4;
+$bottomWave: 80px / 1200px * $inner * 4;
+
+$topY: 35px / 1200px * $inner * 4;
+$bottomY: 15px / 1200px * $inner * 4;
+
+.swooshy {
+  width: $outer;
+  height: $outer;
+  background: $bgColor;
+  padding: $borderOuterWidth;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+.swooshy__inner {
+  border: $borderInnerWidth solid #fff;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  -webkit-transform: translate3d(0,0,0);
+  .debug & {
+    background-image: linear-gradient(0deg, #00ff00 0%, #00ff00 50%, #ff0000 50%, #ff0000 100%);
+  }
+}
+
+.swooshy__amount {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-feature-settings: 'tnum';
+  font-variant-numeric: tabular-nums;
+  font-weight: bold;
+  font-size: 1.35rem;
+  color: $bgColor;
+}
+
+.swooshy__fill {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 2;
+  height: $inner;
+  width: $inner;
+  background: $fillColor;
+  transition: transform .5s ease-out;
+
+  &:before,
+  &:after {
+    content: '';
+    width: $wave;
+    background-repeat: no-repeat;
+    position: absolute;
+    animation: 3s infinite linear waveRight;
+    opacity: 0;
+    transition: top .25s ease-in 0s,
+      opacity .1s ease-out .25s;
+
+    .swooshy--is-swooshing & {
+      opacity: 1;
+      transition: top .25s ease-out .1s,
+        opacity .1s cubic-bezier(0.55, 0.06, 0.68, 0.19) 0s;
+    }
+  }
+  &:before {
+    height: $topWave;
+    background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%201200%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%222%22%3E%3Cpath%20d%3D%22M0%200h1200v25.043a138.505%20138.505%200%2000-5-.008c-56.088.897-67.885%2029.223-115%2030-26.615.438-68.31-29.455-110-30-28.045-.367-41.513%202.207-53.099%206.255-4.05%201.415-16.901%203.884-16.901%203.884-.066.012-31.178%205.298-60%205.298-23.927%200-28.141-6.623-80-5.298-22.424.573-69.532%2020.382-90%2020-51.121-.952-58.459-30-110-30s-79.178%2019.861-145%2019.861-74.827-20.723-120-20c-56.088.897-67.885%2029.223-115%2030-26.615.438-68.31-29.455-110-30-28.045-.367-41.513%202.207-53.099%206.255C12.851%2032.705%200%2035.174%200%2035.174V0z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E");
+    top: -$topWave;
+    .swooshy--is-swooshing & {
+      top: -$topY;
+    }
+  }
+  &:after {
+    height: $bottomWave;
+    background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%201200%2080%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%222%22%3E%3Cpath%20d%3D%22M900%2010.211s12.851-2.469%2016.901-3.884C928.487%202.279%20941.955-.296%20970%20.072c41.69.545%2090.385%2027.438%20117%2027%2047.115-.777%2051.912-26.103%20108-27%201.717-.028%203.382-.024%205%20.008v60.131H0v-50s12.851-2.469%2016.901-3.884C28.487%202.279%2041.955-.296%2070%20.072c41.69.545%2090.385%2027.438%20117%2027%2047.115-.777%2051.918-25.756%20108-27%2068.267-1.516%2078.589%2021.565%20160.2%2019.965C521.01%2018.747%20508.459.211%20560%20.211s76.501%2023.8%20127.622%2024.752c20.468.382%2049.954-14.179%2072.378-14.752%2051.859-1.325%2056.073%205.298%2080%205.298%2028.853%200%2060-5.298%2060-5.298%22%20fill%3D%22%239FB2DC%22%2F%3E%3Cpath%20d%3D%22M900%2010.211s12.851-2.469%2016.901-3.884C928.487%202.279%20941.955-.296%20970%20.072c41.69.545%2083.385%2030.438%20110%2030%2047.115-.777%2058.912-29.103%20115-30%201.717-.028%203.382-.024%205%20.008V80H0V10.211s12.851-2.469%2016.901-3.884C28.487%202.279%2041.955-.296%2070%20.072c41.69.545%2083.385%2030.438%20110%2030%2047.115-.777%2058.912-29.103%20115-30%2045.173-.724%2054.178%2020%20120%2020S508.459.211%20560%20.211s58.879%2029.047%20110%2030c20.468.382%2067.576-19.427%2090-20%2051.859-1.325%2056.073%205.298%2080%205.298%2028.853%200%2060-5.298%2060-5.298%22%20fill%3D%22%23B7C9F1%22%2F%3E%3C%2Fsvg%3E");
+    top: 0px;
+    .swooshy--is-swooshing & {
+      top: -$bottomY;
+    }
+  }
+}
+
+@keyframes waveRight {
+  from {
+    transform: translateX(-75%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}

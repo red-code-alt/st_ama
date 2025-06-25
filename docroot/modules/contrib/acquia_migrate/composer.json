@@ -1,0 +1,66 @@
+{
+    "name": "acquia/acquia-migrate-accelerate",
+    "type": "drupal-module",
+    "description": "An enhanced UI and assistant for Drupal migrations.",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/acquia_migrate",
+    "authors": [
+        {
+            "name": "Acquia",
+            "homepage": "http://www.acquia.com"
+        }
+    ],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/acquia_migrate",
+        "source": "https://git.drupalcode.org/project/acquia_migrate"
+    },
+    "require": {
+        "composer/semver": "^3.0",
+        "drupal/core": "^9.0.6",
+        "drupal/decoupled_pages": "^1.0",
+        "drupal/migmag": "^1.3",
+        "drupal/migrate_plus": "^5",
+        "league/uri": "^6.3",
+        "league/uri-components": "^2.2.1"
+    },
+    "conflict": {
+        "drupal/migrate_tools": "*"
+    },
+    "require-dev": {
+        "acquia/coding-standards": "^1",
+        "dealerdirect/phpcodesniffer-composer-installer": "*",
+        "ergebnis/composer-normalize": "^2.0.0",
+        "phpspec/prophecy-phpunit": "^2",
+        "squizlabs/php_codesniffer": "^3.0@dev"
+    },
+    "config": {
+        "allow-plugins": {
+            "cweagans/composer-patches": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "webdriver-binary/binary-chromedriver": true
+        }
+    },
+    "extra": {
+        "drush": {
+            "services": {
+                "drush.services.yml": "^10"
+            }
+        },
+        "patches": {
+            "drupal/core": {
+                "#3204073: \\Drupal\\Core\\Lock\\PersistentDatabaseLockBackend::acquire() does not allow extending after the first request.": "https://www.drupal.org/files/issues/2021-05-31/persistent_lock_extend-3204073-5.patch",
+                "Avoid https://www.drupal.org/project/drupal/issues/2796755 breaking this module": "https://gist.githubusercontent.com/wimleers/4c8742d5efb74ea5dad1475b4478bd40/raw/99e35617a292b730fdbb36be4f3ce48d5c9863a1/migration-metadata.patch",
+                "track_changes should not prevent efficient imports": "https://www.drupal.org/files/issues/2023-10-08/3392417-track_changes_should_not_prevent_efficient_imports.patch"
+            }
+        },
+        "phpcodesniffer-search-depth": 4
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "composer-normalize": "composer normalize '--indent-size=4' '--indent-style=space' --ansi",
+        "composer-normalize-check": "composer normalize '--indent-size=4' '--indent-style=space' '--dry-run' --ansi",
+        "sniffs": "./vendor/bin/phpcs --standard=./phpcs.xml -p --cache=./.phpcs-cache"
+    }
+}

@@ -1,0 +1,22 @@
+# composer
+/vendor
+/drivers
+
+# PHPCS
+/.phpcs-cache
+
+# PHPStorm config
+.DS_Store
+ .idea/
+ .php_cache
+ vendor/
+
+# NPM
+node_modules/
+
+# unused compiled files
+ui/dist/*.html
+
+# Dev environment
+/docroot
+

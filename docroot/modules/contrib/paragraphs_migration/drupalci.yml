@@ -1,0 +1,36 @@
+build:
+  environment:
+    startcontainers:
+      runcontainers:
+    create_db:
+      dbcreate:
+  codebase:
+    assemble_codebase:
+      checkout_core:
+      checkout.contrib:
+      fetch:
+      patch:
+      composer.core_install:
+      gather_dependencies:
+      update_build:
+      yarn_install:
+      start_phantomjs:
+  assessment:
+    validate_codebase:
+      phplint:
+      container_composer:
+      host_command:
+        commands:
+          # Apply patch from https://www.drupal.org/project/drupal/issues/3218294
+          - "cd ${SOURCE_DIR} && sudo -u www-data curl https://www.drupal.org/files/issues/2021-06-10/core-allow_altering_migrate_field_value_query-3218294-2.patch | sudo -u www-data patch -p1 --verbose"
+          - "cd ${SOURCE_DIR}/modules/contrib/entity_reference_revisions && sudo -u www-data curl https://www.drupal.org/files/issues/2021-06-10/entity_reference_revisions-opt_out_new_revision_save-3218312-2.patch | sudo -u www-data patch -p1 --verbose"
+      csslint:
+      eslint:
+      phpcs:
+    testing:
+      run_tests.standard:
+        types: 'Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional'
+      run_tests.js:
+        concurrency: 1
+        types: 'PHPUnit-FunctionalJavascript'
+      nightwatchjs:

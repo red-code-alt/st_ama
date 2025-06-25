@@ -1,0 +1,464 @@
+################
+# Includes
+#
+# Additional configuration can be provided through includes.
+# One advantage of include files is that if they are updated upstream, the changes affect all pipelines using that include.
+#
+# Includes can be overridden by re-declaring anything provided in an include, here in gitlab-ci.yml
+# https://docs.gitlab.com/ee/ci/yaml/includes.html#override-included-configuration-values
+################
+
+include:
+  ################
+  # DrupalCI includes:
+  # As long as you include this, any future includes added by the Drupal Association will be accessible to your pipelines automatically.
+  # View these include files at https://git.drupalcode.org/project/gitlab_templates/
+  ################
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+################
+# Pipeline configuration variables
+#
+# These are the variables provided to the Run Pipeline form that a user may want to override.
+#
+# Docs at https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/includes/include.drupalci.variables.yml
+################
+variables:
+  AMA__DRUPAL_CORE_VERSION: 9.5.8
+  AMA__RECOMMENDATIONS__VERSION: '2023-09-27'
+  D7_VERSION: '7.82'
+  D7_DIR: www.standard-profile-$D7_VERSION.com
+  # Test using $AMA__DRUPAL_CORE_VERSION instead of $CORE_SUPPORTED.
+  _TARGET_CORE:
+    value: "$AMA__DRUPAL_CORE_VERSION"
+  _WEB_ROOT: "docroot"
+  # Skip linting of CSS: not considered important at this time.
+  SKIP_STYLELINT: 1
+  # Skip linting of JS: Drupal core's rules are not tuned for React/JSX.
+  # @see https://github.com/acquia/orca/issues/68#issuecomment-597280022
+  SKIP_ESLINT: 1
+  # Skip PHPStan.
+  SKIP_PHPSTAN: 1
+
+  _PHPUNIT_CONCURRENT: 1
+  # @todo Remove this to get this ready for Drupal 10!
+  _PHPUNIT_EXTRA: --suppress-deprecations
+
+.AMA_target_versions: &AMA-target-versions
+  - "7.4"
+  - "8.0"
+  - "8.1"
+
+.AMA-matrix-PHP:
+  parallel:
+    matrix:
+      - _TARGET_PHP: *AMA-target-versions
+
+.AMA-matrix-PHP-and-recommendations:
+  parallel:
+    matrix:
+      - _TARGET_PHP: *AMA-target-versions
+        _TARGET_AMA_RECOMMENDATIONS:
+          - recommendations-pinned-*.json
+          - recommendations-next-*.json
+
+# @todo Remove when needs:parallel:matrix when https://gitlab.com/gitlab-org/gitlab/-/issues/255311 is fixed.
+.produce-matrix-build-gitlabci-255311-work-around: &produce-matrix-build-gitlabci-255311-work-around
+  - pushd ..
+  - mv $CI_PROJECT_NAME ${_TARGET_AMA_RECOMMENDATIONS}-${_TARGET_PHP}
+  - mkdir $CI_PROJECT_NAME
+  - mv ${_TARGET_AMA_RECOMMENDATIONS}-${_TARGET_PHP} $CI_PROJECT_DIR/
+  - popd
+
+# @todo Remove when needs:parallel:matrix when https://gitlab.com/gitlab-org/gitlab/-/issues/255311 is fixed.
+.consume-matrix-build-gitlabci-255311-work-around: &consume-matrix-build-gitlabci-255311-work-around
+  - pushd ..
+  - mv $CI_PROJECT_DIR/${_TARGET_AMA_RECOMMENDATIONS}-${_TARGET_PHP} selected_build
+  - rm -rf $CI_PROJECT_DIR
+  - mv selected_build $CI_PROJECT_DIR
+  - popd
+  # Verify that this uses the correct artifact.
+  - test "$_TARGET_PHP" = "$(composer config platform.php)"
+
+# Disable the default `composer` job: it's too simple for AM:A's needs.
+composer:
+  extends: .composer-base
+  rules:
+    - when: never
+
+🪦️ Drupal 7:
+  stage: build
+  script:
+    # Install a Drupal 7-compatible Drush.
+    - echo -e "\e[0Ksection_start:`date +%s`:drush[collapsed=true]\r\e[0KInstall a Drupal 7-compatible Drush."
+    - curl -LSsfo /usr/local/bin/d7drush https://github.com/drush-ops/drush/releases/download/8.4.12/drush.phar
+    - chmod u+x /usr/local/bin/d7drush
+    - echo -e "\e[0Ksection_end:`date +%s`:drush\r\e[0K"
+    # Install Drupal 7 with standard install profile to run acli's app:new:from:drupal7 against.
+    - echo -e "\e[0Ksection_start:`date +%s`:download[collapsed=true]\r\e[0KDownload Drupal 7."
+    - d7drush dl -y --drupal-project-rename=$D7_DIR drupal-$D7_VERSION
+    - echo -e "\e[0Ksection_end:`date +%s`:download\r\e[0K"
+    - echo -e "\e[0Ksection_start:`date +%s`:install[collapsed=true]\r\e[0KInstall Drupal 7."
+    - pushd $D7_DIR
+    - php -d sendmail_path=`which true` $(which d7drush) si -y --sites-subdir=default --db-url=sqlite://sites/default/files/db.sqlite standard install_configure_form.update_status_module='array(FALSE,FALSE)'
+    - echo -e "\e[0Ksection_end:`date +%s`:install\r\e[0K"
+
+    - popd
+    - mv /usr/local/bin/d7drush $CI_PROJECT_DIR/d7drush
+  # Use artifacts to copy codebase to subsequent jobs.
+  # See https://lorisleiva.com/laravel-deployment-using-gitlab-pipelines/.
+  artifacts:
+    expire_in: 1 week
+    expose_as: 'D7'
+    when: always
+    paths:
+      - $D7_DIR
+      - d7drush
+  # Avoid rebuilding this every time.
+  # TRICKY: this won't have effect until https://www.drupal.org/project/infrastructure/issues/3387117 is fixed.
+  cache:
+    key: $D7_VERSION
+    paths:
+      - $D7_DIR
+
+🪦️ Drupal 7 plus contrib:
+  stage: build
+  needs:
+    - "🪦️ Drupal 7"
+  script:
+    - mv d7drush /usr/local/bin/d7drush
+    - pushd $D7_DIR
+
+    - echo -e "\e[0Ksection_start:`date +%s`:download[collapsed=true]\r\e[0KDownload Drupal 7 contrib modules"
+    # Pre-download Drupal 7 modules whose migration paths have been vetted, which aren't universal recommendations and have explicit test coverage...
+    - d7drush pm:download paragraphs entity inline_entity_form
+    - d7drush pm:download paragraphs webform ctools views
+    # Multifield requires ctools and field
+    - d7drush pm:download multifield-1.0-alpha4
+    - d7drush pm:download location
+    - d7drush pm:download bean
+    # Field Group depends on ctools as well but it is downloaded (and installed) for webform.
+    - d7drush pm:download field_group
+    - d7drush pm:download token pathauto
+    # Media Migration tests require linkit
+    - d7drush pm:download linkit-3.6
+    - echo -e "\e[0Ksection_end:`date +%s`:download\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:`date +%s`:install[collapsed=true]\r\e[0KInstall Drupal 7 contrib modules"
+    - d7drush pm:enable -y paragraphs inline_entity_form
+    - d7drush pm:enable -y webform
+    # Multifield requires ctools and field
+    - d7drush pm:enable -y multifield
+    - d7drush pm:enable -y location location_cck
+    - d7drush pm:enable -y bean
+    # Field Group depends on ctools as well but it is downloaded (and installed)
+    # for webform.
+    - d7drush pm:enable -y field_group
+    - d7drush pm:enable -y pathauto
+    # Media Migration tests require linkit
+    - d7drush pm:enable -y linkit
+    - echo -e "\e[0Ksection_end:`date +%s`:install\r\e[0K"
+  # Use artifacts to copy codebase to subsequent jobs.
+  # See https://lorisleiva.com/laravel-deployment-using-gitlab-pipelines/.
+  artifacts:
+    expire_in: 1 week
+    expose_as: 'D7 plus contrib'
+    when: always
+    paths:
+      - $D7_DIR
+
+👩‍🔬 Recommendations:
+  stage: build
+  script:
+    # Switch to branch containing the recommendations.
+    - git fetch origin recommendations
+    - git checkout -q recommendations
+    # `git pull` to get the latest recommendations, which will become the "next" release.
+    - git pull
+    - NEXT_RECOMMENDATIONS_VERSION=$(git rev-list --max-count=1 --abbrev-commit HEAD)
+    - cp recommendations.json recommendations-next-$NEXT_RECOMMENDATIONS_VERSION.json
+    # Make the recommendations MR of the same issue fork available, if any.
+    # https://git.drupalcode.org/help/user/project/merge_requests/reviews/index#checkout-locally-by-adding-a-git-alias
+    - |
+      if [ "$CI_MERGE_REQUEST_IID" ]; then
+        git remote add issue-fork $CI_MERGE_REQUEST_SOURCE_PROJECT_URL
+        git fetch issue-fork
+      fi
+    # Then, check out the pinned version.
+    - git checkout -q $AMA__RECOMMENDATIONS__VERSION
+    - cp recommendations.json recommendations-pinned-$AMA__RECOMMENDATIONS__VERSION.json
+  # @todo Generate 2 distinct artifacts when https://gitlab.com/gitlab-org/gitlab/-/issues/18744 is deployed on Drupal.org.
+  artifacts:
+    name: recommendations
+    paths:
+      - recommendations-next-*.json
+      - recommendations-pinned-$AMA__RECOMMENDATIONS__VERSION.json
+
+.acli-build:
+  extends: .composer-base
+  # @todo Remove this when PHP 7.4 support is dropped.
+  image:
+    name: $_CONFIG_DOCKERHUB_ROOT/php-8.1-apache:production
+  # Install ACLI.
+  before_script:
+    - echo -e "\e[0Ksection_start:`date +%s`:acli_install[collapsed=true]\r\e[0KInstall acli"
+    - curl -LSsfo /usr/local/bin/acli https://github.com/acquia/cli/releases/latest/download/acli.phar
+    - chmod u+x /usr/local/bin/acli
+    # Disable ACLI telemetry.
+    - acli telemetry
+    - acli --version
+    - echo -e "\e[0Ksection_end:`date +%s`:acli_install\r\e[0K"
+  script:
+    # Reduce artifact size: we need the result of "🪦️ Drupal 7 plus contrib" or 🪦️ Drupal 7", but not `d7drush`. Avoid
+    # it from persisting in this job's artifacts.
+    - test ! -e d7drush || rm d7drush
+
+    # Generate a composer.json from a Drupal 7 site and `composer install` it.
+    - echo -e "\e[0Ksection_start:`date +%s`:acli[collapsed=true]\r\e[0Kacli app:new:from:drupal7"
+    - mkdir -p /tmp/built-by-AMA
+    - echo $_TARGET_AMA_RECOMMENDATIONS
+    - ls -al .
+    - acli app:new:from:drupal7 --drupal7-directory $PWD/$D7_DIR --recommendations $PWD/$_TARGET_AMA_RECOMMENDATIONS --directory /tmp/built-by-AMA
+    - rm -rf $PWD/$D7_DIR recommendations*.json
+    - echo -e "\e[0Ksection_end:`date +%s`:acli\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:`date +%s`:dev_deps[collapsed=true]\r\e[0KInstall dev dependencies (to run tests)"
+    # TRICKY: Delete the lock file because:
+    # 1. `drush/drush:11.6.0` installed `consolidation/site-alias:^4`, which has a dependency on
+    #    `symfony/filesytem:^5.4`, which conflicts with `drupal/core-dev`.
+    # 2. ACLI requires PHP >=8, but AM:A must be tested on PHP 7.4 too.
+    - rm /tmp/built-by-AMA/composer.lock
+    # TRICKY: because ACLI requires PHP >=8, but AM:A must be tested on PHP 7.4 too, this job always uses PHP 8.1 but
+    # instructs composer to not install packages requiring newer PHP versions than $_TARGET_PHP.
+    # @see https://getcomposer.org/doc/06-config.md#platform
+    # @todo Remove this when PHP 7.4 support is dropped.
+    - composer config  --working-dir=/tmp/built-by-AMA platform.php $_TARGET_PHP
+    - cat /tmp/built-by-AMA/composer.json
+    # TRICKY: this pipeline does not use https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/scripts/expand_composer_json.php
+    #         and hence should install `drupal/core-dev and `phpspec/prophecy-phpunit` manually.
+    - composer config  --working-dir=/tmp/built-by-AMA allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+    - composer require --working-dir=/tmp/built-by-AMA --no-update --dev drupal/core-dev:$AMA__DRUPAL_CORE_VERSION phpspec/prophecy-phpunit:^2
+    - composer install --working-dir=/tmp/built-by-AMA
+    - echo -e "\e[0Ksection_end:`date +%s`:dev_deps\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:`date +%s`:fs_layout[collapsed=true]\r\e[0KMatch file system layout expected by d.o GitLab Template"
+    - pushd ..
+    - mv $CI_PROJECT_NAME drupal_module_under_test
+    - mv /tmp/built-by-AMA $CI_PROJECT_DIR
+    - mv drupal_module_under_test $CI_PROJECT_DIR/drupal_module_under_test
+    - popd
+    # Remove the composer-installed `drupal/acquia_migrate` and symlink the git checkout instead.
+    - rm -rf $_WEB_ROOT/modules/contrib/acquia_migrate
+    # Overwrite the installed version of the module with the one being tested, in the location that matches the behavior
+    # of https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/scripts/symlink_project.php.
+    - mkdir -p $CI_PROJECT_DIR/$_WEB_ROOT/modules/custom
+    - ln -sv $CI_PROJECT_DIR/drupal_module_under_test $CI_PROJECT_DIR/$_WEB_ROOT/modules/custom/$CI_PROJECT_NAME
+    # Show the result.
+    - ls -al .
+    - cat composer.json
+    - echo -e "\e[0Ksection_end:`date +%s`:fs_layout\r\e[0K"
+
+    # For Nightwatch et al.
+    - echo -e "\e[0Ksection_start:`date +%s`:yarn[collapsed=true]\r\e[0Kyarn install"
+    - yarn --cwd $_WEB_ROOT/core install
+    - touch $_WEB_ROOT/core/.env
+    - echo -e "\e[0Ksection_end:`date +%s`:yarn\r\e[0K"
+
+    - *produce-matrix-build-gitlabci-255311-work-around
+  # TRICKY: this won't have effect until https://www.drupal.org/project/infrastructure/issues/3387117 is fixed.
+  cache:
+    key:
+      files:
+        - composer.json
+        - composer.lock
+    paths:
+      - vendor
+      - docroot
+  artifacts:
+    expire_in: 1 day
+    # @todo Once https://www.drupal.org/project/infrastructure/issues/3387117 is fixed, check whether it's feasible to:
+    # - omit vendor + docroot from this artifact
+    # - instead have the next job run `composer install` and adopt caching too
+#    paths:
+#      - composer.json
+#      - composer.lock
+#      - acli-generated-project-metadata.json
+
+👷 Drupal 7 → ACLI → Drupal 9:
+  extends:
+    - .acli-build
+    - .AMA-matrix-PHP-and-recommendations
+  needs:
+    - "🪦️ Drupal 7"
+    - "👩‍🔬 Recommendations"
+
+👷 Drupal 7 plus contrib → ACLI → Drupal 9:
+  extends:
+    - .acli-build
+    - .AMA-matrix-PHP-and-recommendations
+  needs:
+    - "🪦️ Drupal 7 plus contrib"
+    - "👩‍🔬 Recommendations"
+
+composer-lint:
+  extends:
+    - .AMA-matrix-PHP
+  needs: []
+  before_script:
+    # Ignore dependencies: lint this project, nothing else, so … remove all dependencies.
+    #- jq '.require' < composer.json
+    - composer remove '*/*' --no-install
+    #- jq '.require' < composer.json
+    # TRICKY: this pipeline does not use https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/scripts/expand_composer_json.php
+    #         and hence should install `php-parallel-lint/php-parallel-lint` manually.
+    - composer require php-parallel-lint/php-parallel-lint ^1.2
+
+phpcs:
+  needs: []
+  # TRICKY: this pipeline does not use https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/scripts/expand_composer_json.php and hence must manually install this dev dependency.
+  before_script:
+    # Ignore dependencies: lint this project, nothing else, so .
+    #- jq '.require' < composer.json
+    - composer remove '*/*' --no-install
+    #- jq '.require' < composer.json
+    - composer install
+    # TRICKY: this pipeline does not use https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/scripts/expand_composer_json.php
+    #         and hence must create a symlink.
+    - mkdir -p $_WEB_ROOT/modules/custom
+    - ln -sv $PWD $_WEB_ROOT/modules/custom/$CI_PROJECT_NAME
+
+# Disable the default `phpunit` job: create subsets that can run in parallel.
+phpunit:
+  extends: .phpunit-base
+  rules:
+    - when: never
+
+.ama-phpunit:
+  extends:
+    - .phpunit-base
+    - .AMA-matrix-PHP
+  before_script:
+    - *consume-matrix-build-gitlabci-255311-work-around
+    # TRICKY: Work-around for bug in .phpunit-base: it hardcodes "web" instead of using "$_WEB_ROOT".
+    - ln -sv $_WEB_ROOT web
+    # Since run-test.sh does not support excluding groups: delete the files instead.
+    - test "" = "$RUN_TESTS_EXCLUDE_GROUP" || find $_WEB_ROOT/modules/custom/$CI_PROJECT_NAME/tests -type f -print0 | xargs -0 grep -l "@group $RUN_TESTS_EXCLUDE_GROUP$" | xargs rm
+  variables:
+    # @todo Remove this to get this ready for Drupal 10!
+    SYMFONY_DEPRECATIONS_HELPER: disabled
+  # Override `script` to run `HttpApiStandardTest` first.
+  # @todo Update after https://www.drupal.org/project/drupal/issues/2781123 is done.
+  script:
+    - !reference [ .setup_webserver ]
+    - !reference [ .simpletest_db ]
+    # Provide some context on the test run.
+    - vendor/bin/drush status
+    # 🦜: run `HttpApiStandardTest` first: canary in the coal mine.
+    # (Also: For some reason that first one fails on 7.4 and 8.1 if run with concurrency, but not 8.0. 🤷‍♂️)
+    - test ! -e $_WEB_ROOT/modules/custom/acquia_migrate/tests/src/Functional/HttpApiStandardTest.php || sudo -u www-data -E vendor/bin/phpunit --no-interaction --bootstrap $PWD/web/core/tests/bootstrap.php $_WEB_ROOT/modules/custom/acquia_migrate/tests/src/Functional/HttpApiStandardTest.php --log-junit junit.xml
+    # Now do the same thing as the base implementation…
+    - sudo MINK_DRIVER_ARGS_WEBDRIVER="$MINK_DRIVER_ARGS_WEBDRIVER" -u www-data php $_WEB_ROOT/core/scripts/run-tests.sh --color --keep-results --concurrency "32" --repeat "1" --sqlite "sites/default/files/.sqlite" --dburl $SIMPLETEST_DB --url $SIMPLETEST_BASE_URL --verbose --non-html --directory modules/custom $_PHPUNIT_EXTRA
+
+# @todo Adopt needs:parallel:matrix when https://gitlab.com/gitlab-org/gitlab/-/issues/255311 is fixed.
+#       That would allow:
+#         1. THIS job's matrix to start sooner
+#         2. partial success if one of the jobs in the needed job's matrix fails.
+#       Right now, the choice is between:
+#         1. THIS single job definition, which is blocked on the entire needed job's matrix succeeding.before_script:
+#         2. Alternatively, N manual job definitions, which would be very repetitive and somewhat brittle.
+🏚️→ 🏠 Basic migrations (pinned) 📌:
+  extends: .ama-phpunit
+  needs: ["👷 Drupal 7 → ACLI → Drupal 9"]
+  variables:
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-pinned-*.json
+    RUN_TESTS_EXCLUDE_GROUP: acquia_migrate__contrib
+
+🏚️→ 🏠 Contrib migrations (pinned) 📌:
+  extends: .ama-phpunit
+  needs: ["👷 Drupal 7 plus contrib → ACLI → Drupal 9"]
+  variables:
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-pinned-*.json
+    RUN_TESTS_EXCLUDE_GROUP: acquia_migrate__core
+
+🏚️→ 🏠 Basic migrations (next) 🔜:
+  extends: .ama-phpunit
+  needs: ["👷 Drupal 7 → ACLI → Drupal 9"]
+  variables:
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-next-*.json
+    RUN_TESTS_EXCLUDE_GROUP: acquia_migrate__contrib
+  allow_failure: true
+
+🏚️→ 🏠 Contrib migrations (next) 🔜:
+  extends: .ama-phpunit
+  needs: ["👷 Drupal 7 plus contrib → ACLI → Drupal 9"]
+  variables:
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-next-*.json
+    RUN_TESTS_EXCLUDE_GROUP: acquia_migrate__core
+  allow_failure: true
+
+# Disable the default `nightwatch` job: it's too simple for AM:A's needs.
+nightwatch:
+  # An include of the code above, for easy reuse. See https://docs.gitlab.com/ee/ci/yaml/#extends.
+  extends: .nightwatch-base
+  rules:
+    - when: never
+
+🦉 React UI and JSON:API:
+  extends:
+    - .nightwatch-base
+    - .AMA-matrix-PHP
+  needs: ["👷 Drupal 7 → ACLI → Drupal 9"]
+  variables:
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-pinned-*.json
+  before_script:
+    - *consume-matrix-build-gitlabci-255311-work-around
+  # Run tests with `--tag=acquia_migrate`, otherwise we get a `The command .clickOperation() is already defined.` error.
+  script:
+    - !reference [ .setup_webserver ]
+    - !reference [ .simpletest_db ]
+    - export DRUPAL_TEST_DB_URL=$SIMPLETEST_DB
+    - cd $_WEB_ROOT
+    # @see https://git.drupalcode.org/project/drupal/-/commit/dfa16b8aca8e92be1f00a021c520a645f11f0227 — but tweaked to generate a correct JUnit report
+    - cp ./core/.env.example ./core/.env
+    # dotenv-safe/config does not support environment variables
+    # @see https://github.com/rolodato/dotenv-safe/issues/126
+    # @todo move this to `variables` when the above is resolved
+    - echo "DRUPAL_TEST_BASE_URL='http://localhost/$_WEB_ROOT'" >> ./core/.env
+    - echo "DRUPAL_TEST_CHROMEDRIVER_AUTOSTART=false" >> ./core/.env
+    - echo "DRUPAL_TEST_DB_URL='${DRUPAL_TEST_DB_URL}'" >> ./core/.env
+    - echo "DRUPAL_TEST_WEBDRIVER_HOSTNAME='localhost'" >> ./core/.env
+    - echo "DRUPAL_TEST_WEBDRIVER_CHROME_ARGS='--disable-dev-shm-usage --disable-gpu --headless'" >> ./core/.env
+    - echo "DRUPAL_TEST_WEBDRIVER_PORT='9515'" >> ./core/.env
+    - cat ./core/.env
+    - mkdir -p ./sites/simpletest ./sites/default/files /var/www/.cache/yarn /var/www/.yarn ./core/reports
+    - chown -R www-data:www-data ./sites/simpletest ./sites/default/files /var/www/.cache/yarn /var/www/.yarn ./core/reports ./core/.env
+    # @todo Uncomment this line and remove the line after it once https://www.drupal.org/project/drupal/issues/3389763 lands.
+    #- sudo BABEL_DISABLE_CACHE=1 DRUPAL_NIGHTWATCH_SEARCH_DIRECTORY=modules/custom/ -u www-data yarn --cwd ./core test:nightwatch
+    - sudo BABEL_DISABLE_CACHE=1 -u www-data yarn --cwd ./core test:nightwatch --tag=$CI_PROJECT_NAME
+  artifacts:
+    expire_in: 6 mos
+    expose_as: 'reports'
+    when: always
+    reports:
+      junit: $_WEB_ROOT/core/reports/nightwatch/Tests/*.xml
+    paths:
+      - $_WEB_ROOT/core/reports/nightwatch
+
+# Tests use SQLite by default for performance reasons. But some tests should be run with MySQL/MariaDB specifically.
+🦭🐬MariaDB/MySQL regressions:
+  extends: .ama-phpunit
+  before_script:
+    - *consume-matrix-build-gitlabci-255311-work-around
+    # TRICKY: Work-around for bug in .phpunit-base: it hardcodes "web" instead of using "$_WEB_ROOT".
+    - ln -sv $_WEB_ROOT web
+    # TRICKY: because run-tests.sh either scans the entire project (but then crashes due core missing "@group" in a few places) or runs everything in the given directory, resort to a work-around: run all tests in the given directory, but delete the ones we do not need
+    - find $_WEB_ROOT/modules/custom/$CI_PROJECT_NAME/tests/src -type f \( -iname '*Test.php' \) -print0 | xargs -0 grep -iL "@group acquia_migrate__mysql$" | xargs rm
+  needs: ["👷 Drupal 7 → ACLI → Drupal 9"]
+  variables:
+    _TARGET_DB_TYPE: mysql
+    _TARGET_AMA_RECOMMENDATIONS: recommendations-pinned-*.json

@@ -1,0 +1,36 @@
+id: d7_pm_paragraphs_type
+label: Paragraphs type configuration
+migration_tags:
+  - Drupal 7
+  - Configuration
+source:
+  plugin: d7_pm_paragraphs_type
+  add_description: true
+process:
+  id:
+    -
+      plugin: make_unique_entity_field
+      source: bundle
+      entity_type: paragraphs_type
+      field: id
+      postfix: _
+      length: 29
+  label_from_bundle:
+    -
+      plugin: explode
+      delimiter: '_'
+      source: bundle
+    -
+      plugin: concat
+      delimiter: ' '
+    -
+      plugin: callback
+      callable: ucwords
+  label:
+    - plugin: null_coalesce
+      source:
+        - 'name'
+        - '@label_from_bundle'
+  description: description
+destination:
+  plugin: 'entity:paragraphs_type'

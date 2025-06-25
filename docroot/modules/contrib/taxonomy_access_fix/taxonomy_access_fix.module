@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations by Taxonomy Access Fix module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+use Drupal\migrate\Plugin\MigrateSourceInterface;
+use Drupal\migrate\Plugin\MigrationInterface;
+use Drupal\migrate\Row;
+use Drupal\taxonomy\TermAccessControlHandler as OriginalTermAccessControlHandler;
+use Drupal\taxonomy\VocabularyAccessControlHandler as OriginalVocabularyAccessControlHandler;
+use Drupal\taxonomy_access_fix\TermAccessControlHandler;
+use Drupal\taxonomy_access_fix\VocabularyAccessControlHandler;
+
+/**
+ * Implements hook_entity_type_alter().
+ */
+function taxonomy_access_fix_entity_type_alter(array &$entity_types) {
+  $entity_types['taxonomy_vocabulary']->setHandlerClass('list_builder', 'Drupal\taxonomy_access_fix\VocabularyListBuilder');
+  $access_handler_class = $entity_types['taxonomy_vocabulary']->getHandlerClass('access');
+  if ($access_handler_class !== OriginalVocabularyAccessControlHandler::class) {
+    // If an unexpected access control handler is in use, we can't guarantee
+    // that our replacement handler will return correct access results.
+    throw new LogicException('Unexpected access handler implementation in use for Taxonomy vocabulary entities. This might be due to an unexpected change in Drupal Core or due to a conflict with another contributed or custom module in use.');
+  }
+  $entity_types['taxonomy_vocabulary']->setHandlerClass('access', VocabularyAccessControlHandler::class);
+
+  $access_handler_class = $entity_types['taxonomy_term']->getHandlerClass('access');
+  if ($access_handler_class !== OriginalTermAccessControlHandler::class) {
+    // If an unexpected access control handler is in use, we can't guarantee
+    // that our replacement handler will return correct access results.
+    throw new LogicException('Unexpected access handler implementation in use for Taxonomy term entities. This might be due to an unexpected change in Drupal Core or due to a conflict with another contributed or custom module in use.');
+  }
+  $entity_types['taxonomy_term']->setHandlerClass('access', TermAccessControlHandler::class);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for taxonomy_overview_terms form.
+ *
+ * @see \Drupal\taxonomy\Form\OverviewTerms
+ */
+function taxonomy_access_fix_form_taxonomy_overview_terms_alter(&$form, FormStateInterface &$form_state) {
+  // Admin: Don't fix anything.
+  if (Drupal::currentUser()->hasPermission('administer taxonomy')) {
+    return;
+  }
+  $vocabulary = $form_state->get(['taxonomy', 'vocabulary']);
+  $can_reorder = $vocabulary->access('reorder_terms');
+  foreach (Element::children($form['terms']) as $name) {
+    if ($can_reorder) {
+      continue;
+    }
+    unset($form['terms'][$name]['weight']);
+  }
+  if (!$can_reorder) {
+    // Hide Save and Reset buttons.
+    $form['actions']['#access'] = FALSE;
+    // Remove tableDrag.
+    unset($form['terms']['#tabledrag']);
+    // Remove Weight column.
+    unset($form['terms']['#header'][1]);
+  }
+}
+
+/**
+ * Implements hook_migrate_prepare_row().
+ *
+ * Adds three new permissions 'reorder terms', 'view published terms' and 'view
+ * unpublished terms' for every 'add terms' permission in D7 as every user who
+ * is able to add new taxonomy terms in D7 must also be able to reorder and
+ * view them in D9.
+ */
+function taxonomy_access_fix_migrate_prepare_row(Row $row, MigrateSourceInterface $source, MigrationInterface $migration) {
+  if (!($migration->getBaseId() == 'd7_user_role')) {
+    return;
+  }
+  $all_permissions = $row->getSourceProperty('permissions');
+  foreach ($row->getSourceProperty('permissions') as $permission) {
+    if (preg_match("/^add terms in /", $permission)) {
+      [, $term] = explode("in ", $permission);
+      array_push($all_permissions, 'reorder terms in ' . $term);
+      array_push($all_permissions, 'view terms in ' . $term);
+      array_push($all_permissions, 'view unpublished terms in ' . $term);
+    }
+  }
+  $row->setSourceProperty('permissions', $all_permissions);
+
+}

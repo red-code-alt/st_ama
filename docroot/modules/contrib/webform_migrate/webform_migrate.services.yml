@@ -1,0 +1,5 @@
+services:
+  webform_migrate.migrate_subscriber:
+    class: Drupal\webform_migrate\EventSubscriber\MigrationSubscriber
+    tags:
+      - { name: event_subscriber }

@@ -1,0 +1,7 @@
+block.block.*.third_party.block_subtitle:
+  type: mapping
+  label: Block subtitle third party settings
+  mapping:
+    subtitle:
+      type: text
+      label: Add subtitle for the block

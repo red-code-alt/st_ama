@@ -1,0 +1,4 @@
+# DDEV Configuration
+/.ddev/
+!/.ddev/config.yaml
+!/.ddev/providers/

@@ -1,0 +1,9 @@
+name: Test Database Drivers
+type: module
+description: 'Test database drivers.'
+package: Testing
+
+# Information added by Drupal.org packaging script on 2023-12-19
+version: '1.8.1'
+project: 'acquia_migrate'
+datestamp: 1702973696

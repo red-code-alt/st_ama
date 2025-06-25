@@ -1,0 +1,73 @@
+{
+  "extends": [
+    "airbnb",
+    "plugin:prettier/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
+  ],
+  "root": true,
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "globals": {
+    "Drupal": true,
+    "drupalSettings": true,
+    "drupalTranslations": true,
+    "jQuery": true,
+    "_": true,
+    "Cookies": true,
+    "Backbone": true,
+    "Modernizr": true,
+    "Popper": true,
+    "Sortable": true,
+    "CKEDITOR": true,
+    "__webpack_public_path__": true
+  },
+  "overrides": [
+    {
+      "files": [
+        "__tests__/**/*.js"
+      ],
+      "extends": [
+        "plugin:jest/recommended",
+        "plugin:jest-dom/recommended"
+      ],
+      "env": {
+        "jest": true
+      },
+      "plugins": ["jest", "prettier"]
+    }
+  ],
+  "parser": "babel-eslint",
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "camelcase": ["error", {"allow": ["__webpack_public_path__"]}],
+    "prettier/prettier": "error",
+    "consistent-return": ["off"],
+    "no-underscore-dangle": ["off"],
+    "max-nested-callbacks": ["warn", 3],
+    "import/no-mutable-exports": ["warn"],
+    "no-plusplus": ["warn", {
+      "allowForLoopAfterthoughts": true
+    }],
+    "no-param-reassign": ["off"],
+    "no-prototype-builtins": ["off"],
+    "valid-jsdoc": ["warn", {
+      "prefer": {
+        "returns": "return",
+        "property": "prop"
+      },
+      "requireReturn": false
+    }],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-unused-vars": ["warn"],
+    "operator-linebreak": ["error", "after", { "overrides": { "?": "ignore", ":": "ignore" } }]
+  }
+}

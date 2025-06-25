@@ -1,0 +1,89 @@
+<?php
+
+/**
+ * @file
+ * Adding subtitle to blocks.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\block\Entity\Block;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\block\BlockInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_help().
+ */
+function block_subtitle_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the forms_to_email module.
+    case 'help.page.block_subtitle':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t("Block Subtitle allows users to add subtitle to any block through the block's configuration interface.") . '</p>';
+
+      $output .= '<h3>' . t('Installation note') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Enable the module on <a href=":extend_link">extend menu</a>.', [':extend_link' => Url::fromRoute('system.modules_list')->toString()]) . '</dt>';
+      $output .= '</dl>';
+
+      $output .= '<h3>' . t('Usage') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t("To add a subtitle to a block, simply visit that block's configuration page at Administration > Structure > Block Layout and click on Configure of the desired block.") . '</dt>';
+      $output .= '</dl>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function block_subtitle_block_presave(BlockInterface $entity) {
+  if (empty($entity->getThirdPartySetting('block_subtitle', 'subtitle'))) {
+    $entity->unsetThirdPartySetting('block_subtitle', 'subtitle');
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for block_form.
+ */
+function block_subtitle_form_block_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if (\Drupal::currentUser()->hasPermission('administer block subtitle')) {
+
+    /** @var \Drupal\block\BlockInterface $block */
+    $block = $form_state->getFormObject()->getEntity();
+
+    // This will automatically be saved in the third party settings.
+    $form['settings']['block_subtitle_text'] = [
+      '#type' => 'textfield',
+      '#title' => t('Subtitle'),
+      '#description' => t('Subtitle for the block. Leave blank if you do not need a subtitle.'),
+      '#default_value' => $block->getThirdPartySetting('block_subtitle', 'subtitle'),
+      '#weight' => 10,
+      "#parents" => ['block_subtitle_text']
+    ];
+    $form['#entity_builders'][] = 'block_subtitle_block_form_builder';
+
+  }
+}
+
+/**
+ * Entity builder for the contact form edit form with third party options.
+ */
+function block_subtitle_block_form_builder($entity_type, BlockInterface $block, &$form, FormStateInterface $form_state) {
+  $block->setThirdPartySetting('block_subtitle', 'subtitle', $form_state->getValue('block_subtitle_text'));
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function block_subtitle_preprocess_block(&$variables) {
+  // Blocks coming from page manager widget does not have id.
+  if (!empty($variables['elements']['#id'])) {
+    $block = Block::load($variables['elements']['#id']);
+    if ($block && $subtitle = $block->getThirdPartySetting('block_subtitle', 'subtitle')) {
+      $variables['subtitle'] = $subtitle;
+    }
+  }
+}

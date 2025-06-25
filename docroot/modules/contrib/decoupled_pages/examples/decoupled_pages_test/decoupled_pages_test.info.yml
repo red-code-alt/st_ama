@@ -1,0 +1,11 @@
+name: Decoupled Pages Test Module
+description: Tests the Decoupled Pages module and provides examples.
+package: Testing
+type: module
+dependencies:
+  - decoupled_pages:decoupled_pages
+
+# Information added by Drupal.org packaging script on 2024-01-04
+version: '8.x-1.1'
+project: 'decoupled_pages'
+datestamp: 1704379266

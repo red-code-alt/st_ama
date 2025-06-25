@@ -1,0 +1,10 @@
+.ui-dialog.ui-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ui-widget-overlay {
+  z-index: 1259;
+}

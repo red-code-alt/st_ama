@@ -1,0 +1,3 @@
+services:
+  paragraphs_migration.migration_plugins_alterer:
+    class: Drupal\paragraphs_migration\MigrationPluginsAlterer

@@ -1,0 +1,14 @@
+{
+    "name": "drupal/workbench_moderation_migrate",
+    "description": "Migrates Drupal 7 Workbench Moderation flows to Drupal 9 core's Workflows and Content Moderation.",
+    "homepage": "https://www.drupal.org/project/workbench_moderation_migrate",
+    "license": "GPL-2.0-or-later",
+    "type": "drupal-module",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/workbench_moderation_migrate",
+        "source": "https://git.drupalcode.org/project/workbench_moderation_migrate"
+    },
+    "require": {
+        "drupal/migmag": "^1.2.0"
+    }
+}

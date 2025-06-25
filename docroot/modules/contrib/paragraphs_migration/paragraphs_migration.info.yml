@@ -1,0 +1,13 @@
+name: 'Paragraphs Migration'
+type: module
+description: 'Drupal 7 to Drupal 8/9 migration path for the D7 Field Collection, D7 Paragraphs, D7 Multifield.'
+core_version_requirement: ^9
+package: 'Migration'
+dependencies:
+  - migmag:migmag_process
+  - paragraphs:paragraphs
+  - smart_sql_idmap:smart_sql_idmap
+# Information added by Drupal.org packaging script on 2022-06-24
+version: '1.0.0-alpha2'
+project: 'paragraphs_migration'
+datestamp: 1656062067

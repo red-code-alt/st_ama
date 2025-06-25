@@ -1,0 +1,98 @@
+/**
+ * @file
+ * Visual styles taken from claro views exposed form.
+ */
+
+.exposed-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: var(--space-l);
+  margin-bottom: var(--space-l);
+  padding: var(--space-xs) var(--space-l) var(--space-l) var(--space-l);
+  border: var(--details-border-size) solid var(--details-border-color);
+  border-radius: var(--details-border-size-radius);
+  background-color: var(--color-white);
+  box-shadow: var(--details-box-shadow);
+}
+
+.exposed-form--labeled {
+  align-items: flex-start;
+}
+
+.exposed-form .form-item {
+  margin: var(--space-s) var(--space-xs) 0 0; /* LTR */
+
+  [dir="rtl"] & {
+    margin-right: 0;
+    margin-left: var(--space-xs);
+  }
+
+  // added for responsive
+  max-width: 100%
+}
+
+.exposed-form__item--actions.form-item {
+  [dir="rtl"] &:last-child {
+    margin-left: 0;
+  }
+
+  .button {
+    margin-bottom: 0;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  .exposed-form--labeled & {
+    margin-top: 1.3rem;
+  }
+}
+
+.migrate__exposed-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+  border: 1px solid rgba(216, 217, 224, 0.8);
+  border-radius: 2px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.migrate__exposed-form__item,
+.migrate__exposed-form .form-item {
+  margin: 0.75rem 0.5rem 0 0; /* LTR */
+}
+
+[dir="rtl"] .migrate__exposed-form__item,
+[dir="rtl"] .migrate__exposed-form .form-item {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+.migrate__exposed-form__item--actions .button {
+  margin-bottom: 0;
+}
+
+.migrate__exposed-form__item--actions .button:last-child {
+  margin-right: 0;
+}
+
+[dir="rtl"] .migrate__exposed-form__item--actions:last-child {
+  margin-left: 0;
+}
+
+.exposed-form__item--divider {
+  margin-top: 0;
+  padding: 0 var(--space-s) var(--space-xs) var(--space-xs); /* LTR */
+  align-self: center;
+
+  [dir="rtl"] & {
+    padding-right: 0;
+    padding-left: var(--space-xs);
+  }
+}

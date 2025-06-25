@@ -1,0 +1,38 @@
+id: d7_pm_paragraphs_revisions
+label: Paragraphs Revisions
+migration_tags:
+  - Drupal 7
+  - Content
+  - Paragraphs Revisions Content
+deriver: Drupal\paragraphs_migration\Plugin\migrate\D7ParagraphsItemDeriver
+source:
+  plugin: d7_pm_paragraphs_item_revision
+process:
+  id_lookup:
+    plugin: migmag_lookup
+    migration: d7_pm_paragraphs
+    source: item_id
+  missing_revision_logging:
+    source: '@id_lookup'
+    plugin: skip_on_empty
+    method: row
+    message: 'This paragraph entity revision belongs to a missing paragraph on the source site. Skipping since there is no data we can migrate.'
+  id:
+    plugin: extract
+    source: '@id_lookup'
+    index:
+      - 0
+  type:
+    plugin: migration_lookup
+    migration: d7_pm_paragraphs_type
+    no_stub: true
+    source: bundle
+  # @todo Get the langcode from the parent entity revision.
+  # See https://drupal.org/i/3146632.
+  # langcode: langcode
+destination:
+  plugin: entity_reference_revisions:paragraph
+  new_revisions: TRUE
+migration_dependencies:
+  required:
+    - d7_pm_paragraphs

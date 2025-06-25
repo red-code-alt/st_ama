@@ -1,0 +1,22 @@
+name: "Acquia Migrate Accelerate"
+description: An enhanced UI and assistant for Drupal migrations
+package: Migration
+
+type: module
+core_version_requirement: ^9.0.6
+
+dependencies:
+  - drupal:migrate
+  - drupal:migrate_drupal
+  - drupal:migrate_drupal_ui
+  - drupal:migrate_plus
+  - drupal:decoupled_pages
+  - drupal:syslog
+  - migmag:migmag_menu_link_migrate
+  - migmag:migmag_rollbackable_replace
+  - migmag:migmag_process_lookup_replace
+
+# Information added by Drupal.org packaging script on 2023-12-19
+version: '1.8.1'
+project: 'acquia_migrate'
+datestamp: 1702973696

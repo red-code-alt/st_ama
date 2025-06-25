@@ -1,0 +1,118 @@
+:root {
+  --fixed-width: 300px;
+}
+
+.module-recommendations__header {
+  grid-template-columns: var(--fixed-width) 1fr var(--fixed-width);
+}
+
+.module-recommendations__row {
+  grid-template-columns: var(--fixed-width) 1fr;
+  position: relative;
+
+  .dropdown-toggle {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+  }
+}
+
+.module-recommendations__recommendation {
+  position: relative;
+}
+
+.module-recommendations__recommendation_status {
+  font-size: .8rem;
+  margin: 0;
+  position: absolute;
+  top: -1rem;
+  left: -24px;
+}
+
+.module-recommendations__recommendation-note {
+  margin: -2rem 0 0 0;
+}
+
+.module-recommendations__recommendation > .datagrid__item {
+  margin-top: 2rem;
+}
+
+.module-recommendations__recommendation > .module-recommendations__recommendation-header + .datagrid__item {
+  margin-top: inherit;
+}
+
+.module-recommendations__module-list {
+  margin: 0;
+  padding: 0;
+}
+
+.module-recommendations__row-inner {
+  display: grid;
+  grid-template-columns: 1fr var(--fixed-width);
+}
+
+.module-recommendations__module-list-item {
+
+}
+
+.module-recommendations__install-instructions {
+  grid-column-start: 2;
+  margin: 1.5rem 0;
+  display: none;
+
+  .is-expanded & {
+    display: block;
+  }
+}
+
+.module-recommendations__install-status {
+  position: relative;
+  display: inline-block;
+  padding-left: 1.5em;
+  text-decoration: none;
+  cursor: help;
+
+  &:before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 1em;
+    height: 1.5em;
+    content: '';
+    background: transparent no-repeat 50% 50%;
+  }
+}
+
+.module-recommendations__install-status--installed {
+  &:before {
+    background-image: url(/core/themes/claro/images/core/73b355/check.svg);
+  }
+}
+.module-recommendations__install-status--not-installed {
+  &:before {
+    background-image: url(/core/themes/claro/images/core/e32700/error.svg);
+  }
+}
+.module-recommendations__install-status--not-enabled {
+  &:before {
+    background-image: url(/core/themes/claro/images/core/e29700/warning.svg);
+  }
+}
+
+.source-module__title,
+.recommendation-module__title {
+  font-weight: bold;
+}
+.recommendation-module__title {
+  display: flex;
+  align-items: center;
+
+  .title__badge {
+    margin-left: .5rem;
+  }
+}
+
+.title__badge[title]:not([title=""]) {
+  cursor: help;
+}

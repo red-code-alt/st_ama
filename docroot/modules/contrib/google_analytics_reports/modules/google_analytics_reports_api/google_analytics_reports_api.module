@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @file
+ * Implements the API through which Google Analytics data can be accessed.
+ */
+
+/**
+ * Convert an object to array.
+ */
+function _to_array($obj) {
+  $temp = (array) $obj;
+  $array = [];
+
+  foreach ($temp as $k => $v) {
+    $k = preg_match('/^\x00(?:.*?)\x00(.+)/', $k, $matches) ? $matches[1] : $k;
+    $array[$k] = $v;
+  }
+
+  return $array;
+}
+
+/**
+ * Google Analytics convert dimentrics.
+ */
+function _ga_convert_dimentrics($field_name, $cb1, $cb2) {
+  $available_fields = google_analytics_reports_get_fields();
+
+  if (!$available_fields[$field_name]) {
+    return;
+  }
+  $type = $available_fields[$field_name]->type;
+
+  if ($type === 'DIMENSION') {
+    $cb1();
+  }
+  else {
+    $cb2();
+  }
+}

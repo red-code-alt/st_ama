@@ -1,0 +1,175 @@
+id: workbench_moderation_flow
+label: 'Workbench Moderation flow'
+deriver: Drupal\workbench_moderation_migrate\Plugin\migrate\WorkbenchModerationFlowDeriver
+migration_tags:
+  - Drupal 7
+  - Configuration
+source:
+  plugin: workbench_moderation_flow
+  constants:
+    id_prefix: 'editorial_with'
+    id_suffix: 'default_state'
+    type: 'content_moderation'
+    archive_state:
+      label: 'Archive'
+      published: false
+      default_revision: true
+      weight: 1000
+    archive_transition:
+      label: 'Archive'
+      from:
+        - published
+      to: archive
+      weight: 1000
+process:
+  default_state:
+    -
+      plugin: callback
+      callable: unserialize
+      source: value
+    -
+      plugin: skip_on_empty
+      method: row
+  id:
+    plugin: concat
+    source:
+      - 'constants/id_prefix'
+      - '@default_state'
+      - 'constants/id_suffix'
+    delimiter: '_'
+  type: 'constants/type'
+  label:
+    -
+      plugin: explode
+      source: '@id'
+      delimiter: '_'
+    -
+      plugin: concat
+      delimiter: ' '
+    -
+      plugin: callback
+      callable: ucwords
+  'type_settings/states':
+    plugin: sub_process
+    source: workbench_moderation_states
+    key: 'name'
+    process:
+      label: label
+      published:
+        # If the name is 'published', then this property and default_revision
+        # need to be set to true.
+        -
+          plugin: explode
+          source: name
+          delimiter: 'published'
+        -
+          plugin: concat
+        -
+          plugin: callback
+          callable: 'strlen'
+        -
+          plugin: static_map
+          map:
+            0: true
+          default_value: false
+      default_revision: '@published'
+      weight: weight
+  # We need an archive state in Drupal 9.
+  'type_settings/states/archive': 'constants/archive_state'
+
+  transitions:
+    plugin: sub_process
+    source: workbench_moderation_transitions
+    process:
+      label: name
+      from:
+        plugin: get
+        source:
+          - from_name
+      to: to_name
+      weight: id
+  transition_keys:
+    -
+      plugin: sub_process
+      source: workbench_moderation_transitions
+      process:
+        key:
+          plugin: machine_name
+          source: name
+    -
+      plugin: flatten
+  source_transitions:
+    plugin: callback
+    callable: array_combine
+    unpack_source: true
+    source:
+      - '@transition_keys'
+      - '@transitions'
+  computed_state_keeping_transitions:
+    plugin: sub_process
+    source: workbench_moderation_states
+    key: 'name'
+    process:
+      label:
+        plugin: concat
+        source:
+          - missing
+          - label
+        delimiter: 'Keep in '
+      from:
+        plugin: get
+        source:
+          - name
+      to: name
+      weight: weight
+  computed_transition_keys:
+    -
+      plugin: sub_process
+      source: workbench_moderation_states
+      process:
+        key:
+          -
+            plugin: concat
+            source:
+              - missing
+              - name
+            delimiter: '_keep_in_'
+          -
+            plugin: machine_name
+    -
+      plugin: flatten
+  computed_transitions:
+    plugin: callback
+    callable: array_combine
+    unpack_source: true
+    source:
+      - '@computed_transition_keys'
+      - '@computed_state_keeping_transitions'
+  'type_settings/transitions':
+    plugin: callback
+    callable: array_merge
+    unpack_source: true
+    source:
+      - '@computed_transitions'
+      - '@source_transitions'
+  # We need an archive transition in Drupal 9.
+  'type_settings/transitions/archive': 'constants/archive_transition'
+
+  'type_settings/entity_types/node':
+    -
+      plugin: sub_process
+      source: node_types
+      process:
+        node_type:
+          plugin: migration_lookup
+          source: node_type
+          migration: d7_node_type
+          no_stub: true
+    -
+      plugin: flatten
+  'type_settings/default_moderation_state': '@default_state'
+destination:
+  plugin: entity:workflow
+migration_dependencies:
+  optional:
+    - d7_node_type

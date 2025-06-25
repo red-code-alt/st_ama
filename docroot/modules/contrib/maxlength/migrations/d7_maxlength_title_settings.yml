@@ -1,0 +1,24 @@
+id: d7_maxlength_title_settings
+label: maxlength
+migration_tags:
+  - Drupal 7
+  - Configuration
+deriver: Drupal\maxlength\Plugin\migrate\MaxlengthDeriver
+source:
+  plugin: maxlength_title_settings
+  constants:
+    entity_type: node
+    form_mode: default
+    field_name: title
+process:
+  bundle: mx_bundle
+  form_mode: 'constants/form_mode'
+  entity_type: 'constants/entity_type'
+  field_name: 'constants/field_name'
+  'options/third_party_settings/maxlength/maxlength_js': mx_length
+  'options/third_party_settings/maxlength/maxlength_js_label': mx_label
+destination:
+  plugin: component_entity_form_display
+migration_dependencies:
+  required:
+    - d7_node_type

@@ -1,0 +1,85 @@
+id: pm_multifield
+label: Multifield
+migration_tags:
+  - Drupal 7
+  - Content
+  - Multifield Content
+deriver: Drupal\paragraphs_migration\Plugin\migrate\MultifieldDeriver
+source:
+  plugin: pm_multifield
+process:
+  id:
+    -
+      plugin: migration_lookup
+      migration: pm_multifield
+      no_stub: true
+      source:
+        - entity_type
+        - entity_id
+        - field_name
+        - delta
+    -
+      plugin: default_value
+      default_value:
+        - null # ID.
+        - null # Revision ID.
+        - null # Language ID.
+    -
+      plugin: extract
+      index:
+        - 0
+  revision_id:
+    -
+      plugin: migration_lookup
+      migration: pm_multifield
+      no_stub: true
+      source:
+        - entity_type
+        - entity_id
+        - field_name
+        - delta
+        - revision_id
+    -
+      plugin: default_value
+      default_value:
+        - null # ID.
+        - null # Revision ID.
+        - null # Language ID.
+    -
+      plugin: extract
+      index:
+        - 1
+  type:
+    -
+      plugin: migration_lookup
+      migration: pm_multifield_type
+      no_stub: true
+      source: field_name
+    -
+      plugin: skip_on_empty
+      method: row
+  parent_id: entity_id
+  parent_type: entity_type
+  parent_field_name: field_name
+  langcode:
+    plugin: null_coalesce
+    source:
+      - host_language
+      - language
+  # In Drupal 9, when an entity translation is the default translation, then
+  # "content_translation_source" is "und". This is a bit different than Drupal 7
+  # Entity Translation, where default_translations are represented with "source"
+  # (current alias: "source_language") set to an empty string ''.
+  content_translation_source:
+    plugin: default_value
+    source: source_language
+    default_value: und
+destination:
+  plugin: entity_complete:paragraph
+  translations: true
+migration_dependencies:
+  required:
+    - pm_multifield_type
+  optional:
+    - d7_field_instance
+    - pm_multifield_translation_settings

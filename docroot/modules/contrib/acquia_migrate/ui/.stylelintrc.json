@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "max-empty-lines": 1,
+    "selector-list-comma-space-after": "never-single-line",
+    "selector-list-comma-newline-after": "always",
+    "selector-descendant-combinator-no-non-space": true,
+    "selector-combinator-space-after": "always",
+    "color-hex-case": "lower",
+    "indentation": 2
+  }
+}

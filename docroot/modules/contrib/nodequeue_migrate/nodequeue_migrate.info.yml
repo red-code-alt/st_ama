@@ -1,0 +1,13 @@
+name: Nodequeue Migrate
+type: module
+description: 'Enables migration from nodequeue to entityqueue.'
+package: Migrate
+# version: VERSION
+core_version_requirement: ^8.8 || ^9
+dependencies:
+  - entityqueue
+
+# Information added by Drupal.org packaging script on 2021-10-20
+version: '8.x-1.2'
+project: 'nodequeue_migrate'
+datestamp: 1634726794

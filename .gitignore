@@ -1,0 +1,135 @@
+# Drupal Gitignore for Acquia Migrate Project
+
+# Drupal core files (when managing core with Composer)
+docroot/core
+docroot/modules/README.txt
+docroot/profiles/README.txt
+docroot/sites/README.txt
+docroot/sites/example.sites.php
+docroot/sites/example.settings.local.php
+docroot/sites/development.services.yml
+docroot/themes/README.txt
+docroot/web.config
+docroot/autoload.php
+docroot/composer.json
+docroot/composer.lock
+docroot/index.php
+docroot/robots.txt
+docroot/update.php
+docroot/.csslintrc
+docroot/.editorconfig
+docroot/.eslintignore
+docroot/.eslintrc.json
+docroot/.gitattributes
+docroot/.htaccess
+docroot/INSTALL.txt
+docroot/README.txt
+
+# Vendor directory (Composer dependencies)
+/vendor/
+
+# Sensitive configuration files
+docroot/sites/*/settings.local.php
+docroot/sites/*/settings.ddev.php
+
+# Files directory (contains uploads, can be huge)
+docroot/sites/*/files/
+!docroot/sites/*/files/.htaccess
+!docroot/sites/*/files/README.txt
+
+# Private files
+private/
+docroot/sites/*/private/
+
+# Backup files
+*.sql
+*.sql.gz
+*.mysql
+*.mysql.gz
+*.tar
+*.tar.gz
+*.zip
+*.dump
+
+# Temporary files
+docroot/sites/*/temp/
+tmp/
+temp/
+
+# DDEV specific
+.ddev/db_snapshots/
+.ddev/homeadditions/
+.ddev/import-db/
+.ddev/.gitignore
+.ddev/config.local.yaml
+.ddev/docker-compose.*.yaml
+.ddev/mutagen/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.buildpath
+.settings/
+nbproject/
+
+# Node modules (if any frontend build tools are used)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compiled CSS/JS
+docroot/sites/*/files/css/
+docroot/sites/*/files/js/
+docroot/sites/*/files/php/
+docroot/sites/*/files/styles/
+docroot/sites/*/files/languages/
+
+# Config sync directory (can be large)
+docroot/sites/*/files/config_*/
+!docroot/sites/*/files/config_*/README.txt
+
+# Migration specific - exclude large migration files
+backup-*.sql.gz
+migration-backup-*.sql.gz
+source-backup-*.sql.gz
+d7-backup-*.sql.gz
+
+# Drupal console
+console/
+
+# Drush
+drush/contrib/
+
+# Composer files that might be in docroot
+/docroot/vendor/
+
+# Error logs
+error_log
+*.log
+
+# Cache directories
+.sass-cache/
+docroot/sites/*/files/.ht.sqlite*
+
+# Patch files
+*.patch
+*.diff
+
+# Other Drupal files to ignore
+docroot/sites/default/default.settings.php
+docroot/sites/default/default.services.yml

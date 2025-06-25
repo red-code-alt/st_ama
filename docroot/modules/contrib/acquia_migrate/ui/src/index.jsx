@@ -1,0 +1,43 @@
+import React from 'react';
+import { render, unmountComponentAtNode } from 'react-dom';
+import './css/theme.scss';
+
+import App from './dashboard-app';
+import { ErrorBoundary, Try, Catch } from './errors/try-catch';
+import { ErrorAlert } from './components/alerts';
+import withError from './errors/with-error';
+import ApplicationError from './errors/application-error';
+
+const DisplayError = withError(ErrorAlert);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const domContainer = document.querySelector('#decoupled-page-root');
+  const modulePath = domContainer.getAttribute('data-module-path');
+  __webpack_public_path__ = `/${modulePath}/ui/dist/`;
+
+  const basepath = domContainer.getAttribute('data-basepath');
+  const basepathPreselect = domContainer.getAttribute(
+    'data-basepath-preselect',
+  );
+  const basepathModule = domContainer.getAttribute('data-basepath-module');
+  const source = domContainer.getAttribute('data-source');
+
+  if (domContainer) {
+    render(
+      <ErrorBoundary>
+        <Try>
+          <App
+            basepath={basepath}
+            basepathModule={basepathModule}
+            basepathPreselect={basepathPreselect}
+            source={source}
+          />
+        </Try>
+        <Catch>
+          <DisplayError />
+        </Catch>
+      </ErrorBoundary>,
+      domContainer,
+    );
+  }
+});

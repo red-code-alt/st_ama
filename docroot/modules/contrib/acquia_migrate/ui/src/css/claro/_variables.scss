@@ -1,0 +1,81 @@
+:root {
+  --color-absolutezero: #003cc5;
+  --color-white: #fff;
+  --color-text: #222330;
+  --color-text-light: var(--color-grayblue);
+  --color-whitesmoke: #f3f4f9;
+  --color-whitesmoke-light: #fafbfd;
+  --color-lightgray: #d4d4d8;
+  --color-grayblue: #8e929c;
+  --color-oldsilver: #82828c;
+  --color-davysgrey: #545560;
+  --color-maximumred: #d72222;
+  --color-sunglow: #ffd23f;
+  --color-sunglow-shaded: #977405;
+  --color-lightninggreen: #26a769;
+  --color-focus: var(--color-lightninggreen);
+  /* Variations. */
+  --color-lightgray-hover: #c2c3ca; /* 5% darker than base. */
+  --color-lightgray-active: #adaeb3; /* 10% darker than base. */
+  --color-absolutezero-hover: #0036b1; /* 10% darker than base. */
+  --color-absolutezero-active: #00339a; /* 20% darker than base. */
+  --color-maximumred-hover: #c11f1f; /* 5% darker than base. */
+  --color-maximumred-active: #ab1b1b; /* 10% darker than base. */
+  --color-bgblue-hover: #f0f5fd; /* 5% darker than base. */
+  --color-bgblue-active: #e6ecf8; /* 10% darker than base. */
+  --color-bgred-hover: #fdf5f5; /* 5% darker than base. */
+  --color-bgred-active: #fceded; /* 10% darker than base. */
+  /*
+   * Base.
+   */
+  --color-fg: var(--color-text);
+  --color-bg: var(--color-white);
+  --color-link: var(--color-absolutezero);
+  --color-link-hover: var(--color-absolutezero-hover);
+  --color-link-active: var(--color-absolutezero-active);
+  --color-divider: rgba(142, 146, 156, 0.5);
+
+  --space-xl: 3rem; /* 3 * 16px = 48px */
+  --space-l: 1.5rem; /* 1.5 * 16px = 24px */
+  --space-m: 1rem; /* 1 * 16px = 16px */
+  --space-s: 0.75rem; /* 0.75 * 16px = 12px */
+  --space-xs: 0.5rem; /* 0.5 * 16px = 8px */
+  /*
+   * Details.
+   */
+  --details-bg-color: rgba(243, 244, 249, 0.4);
+  --details-border-color: rgba(216, 217, 224, 0.8);
+  --details-summary-shadow-color: var(--color-focus);
+  --details-summary-focus-border-size: var(--focus-border-size);
+  --details-desktop-wrapper-padding-start: calc(var(--space-m) + var(--space-s) + var(--space-xs));
+  --details-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --details-border-size: 1px;
+  --details-border-size-radius: 2px;
+  --details-accordion-border-size-radius: var(--base-border-radius);
+  --details-spread-box-shadow-radius: 2px;
+  --details-bg-color-transition-duration: 0.12s;
+  --details-box-shadow-transition-duration: 0.2s;
+  --details-transform-transition-duration: 0.12s;
+}
+
+// Z-index master list
+//
+// Warning: Avoid customizing these values. They're used for a bird's eye view
+// of components dependent on the z-axis and are designed to all work together.
+
+$zindex-dropdown:                   1000 !default;
+
+// Dropdowns
+//
+// Dropdown menu container and contents.
+
+$dropdown-min-width:                10rem !default;
+$dropdown-padding-y:                .5rem !default;
+$dropdown-spacer:                   .125rem !default;
+$dropdown-border-color:             rgba(#000000, .15) !default;
+$dropdown-border-radius:            2px;
+$dropdown-border-width:             1px;
+$dropdown-inner-border-radius:      subtract($dropdown-border-radius, $dropdown-border-width) !default;
+$dropdown-box-shadow:               0 .5rem 1rem rgba(#000000, .175) !default;
+$dropdown-item-padding-y:           .25rem !default;
+$dropdown-item-padding-x:           1.5rem !default;

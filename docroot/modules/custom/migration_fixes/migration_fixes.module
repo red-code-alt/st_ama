@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * @file
+ * Custom migration fixes module - SURGICAL VERSION.
+ */
+
+use Drupal\migrate\Plugin\MigrationInterface;
+
+/**
+ * Implements hook_migrate_prepare_row().
+ * SURGICAL approach: fix only critical blocking errors.
+ */
+function migration_fixes_migrate_prepare_row($row, $source, MigrationInterface $migration) {
+  $migration_id = $migration->id();
+  
+  // ONLY target attrattore migration specifically
+  if (strpos($migration_id, 'attrattore') === false) {
+    return; // Exit early for all other migrations
+  }
+  
+  // Get critical properties
+  $nid = $row->getSourceProperty('nid');
+  $title = $row->getSourceProperty('title');
+  $body = $row->getSourceProperty('body');
+  
+  // FIX 1: NULL title (causes DB constraint violation)
+  if (is_null($title) || trim($title) === '') {
+    $row->setSourceProperty('title', 'Attrattore #' . $nid);
+  }
+  
+  // FIX 2: Invalid body format (causes validation errors)
+  if (!is_null($body)) {
+    // Check if body is array and has format issues
+    if (is_array($body)) {
+      $fixed_body = [];
+      
+      // Handle multi-dimensional body field
+      foreach ($body as $delta => $item) {
+        if (is_array($item) && isset($item['value'])) {
+          // Map D7 formats to valid D9 formats
+          $format = isset($item['format']) ? $item['format'] : '';
+          
+          // Critical format mapping D7->D9 - EXPANDED
+          $format_map = [
+            // Numeric IDs from D7
+            '1' => 'filtered_html',
+            '2' => 'full_html', 
+            '3' => 'plain_text',
+            '4' => 'basic_html',
+            '5' => 'restricted_html',
+            // String formats
+            'filtered_html' => 'filtered_html',
+            'full_html' => 'full_html',
+            'plain_text' => 'plain_text',
+            'basic_html' => 'basic_html',
+            'restricted_html' => 'restricted_html',
+            // Common fallbacks
+            'php_code' => 'plain_text', // deprecated format
+            '' => 'plain_text', // default for empty
+            null => 'plain_text', // default for null
+          ];
+          
+          // Force basic_html for evento to avoid validation errors 
+          if (strpos($migration_id, 'evento') !== false) {
+            $mapped_format = 'basic_html';
+          } else {
+            $mapped_format = isset($format_map[$format]) ? $format_map[$format] : 'plain_text';
+          }
+          
+          // DEBUG: Log all format mappings for evento to understand issue
+          if (strpos($migration_id, 'evento') !== false) {
+            \Drupal::logger('migration_fixes')->notice('EVENTO DEBUG - Original format: @format, Mapped: @mapped, Node: @nid', [
+              '@format' => $format,
+              '@mapped' => $mapped_format,
+              '@nid' => $nid,
+            ]);
+          }
+          
+          // Log only truly unknown formats for debugging
+          if (!isset($format_map[$format]) && $format !== '' && !in_array($format, ['filtered_html', 'full_html', 'plain_text', 'basic_html', 'restricted_html'])) {
+            \Drupal::logger('migration_fixes')->warning('Unknown body format: @format for node @nid', [
+              '@format' => $format,
+              '@nid' => $nid,
+            ]);
+          }
+          
+          $fixed_body[] = [
+            'value' => $item['value'],
+            'format' => $mapped_format,
+            'summary' => isset($item['summary']) ? $item['summary'] : ''
+          ];
+        } elseif (is_string($item)) {
+          // Handle string values
+          $fixed_body[] = [
+            'value' => $item,
+            'format' => 'plain_text',
+            'summary' => ''
+          ];
+        }
+      }
+      
+      if (!empty($fixed_body)) {
+        $row->setSourceProperty('body', $fixed_body);
+      }
+    } elseif (is_string($body)) {
+      // Handle string body
+      $row->setSourceProperty('body', [[
+        'value' => $body,
+        'format' => 'plain_text',
+        'summary' => ''
+      ]]);
+    }
+  } else {
+    // Handle NULL body
+    $row->setSourceProperty('body', [[
+      'value' => '',
+      'format' => 'plain_text',
+      'summary' => ''
+    ]]);
+  }
+}

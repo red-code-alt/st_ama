@@ -1,0 +1,287 @@
+name: ddev-sardegna-turismo-d9
+networks:
+    ddev_default:
+        external: true
+        name: ddev_default
+    default:
+        labels:
+            com.ddev.platform: ddev
+        name: ddev-sardegna-turismo-d9_default
+services:
+    db:
+        build:
+            args:
+                BASE_IMAGE: ddev/ddev-dbserver-mariadb-10.11:v1.24.6
+                gid: "20"
+                uid: "501"
+                username: luca.soda
+            context: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev/.dbimageBuild
+            dockerfile: Dockerfile
+        cap_add:
+            - SYS_NICE
+        command: []
+        container_name: ddev-sardegna-turismo-d9-db
+        environment:
+            BITNAMI_VOLUME_DIR: ""
+            COLUMNS: "73"
+            DDEV_DATABASE: mariadb:10.11
+            DDEV_DATABASE_FAMILY: mysql
+            DDEV_GOARCH: arm64
+            DDEV_GOOS: darwin
+            DDEV_HOSTNAME: sardegna-turismo-d9.ddev.site
+            DDEV_PHP_VERSION: "8.1"
+            DDEV_PRIMARY_URL: https://sardegna-turismo-d9.ddev.site
+            DDEV_PRIMARY_URL_PORT: "443"
+            DDEV_PRIMARY_URL_WITHOUT_PORT: https://sardegna-turismo-d9.ddev.site
+            DDEV_PROJECT: sardegna-turismo-d9
+            DDEV_PROJECT_TYPE: drupal9
+            DDEV_ROUTER_HTTP_PORT: "80"
+            DDEV_ROUTER_HTTPS_PORT: "443"
+            DDEV_SCHEME: https
+            DDEV_SITENAME: sardegna-turismo-d9
+            DDEV_TLD: ddev.site
+            DOCKER_IP: 127.0.0.1
+            HOST_DOCKER_INTERNAL_IP: ""
+            IS_DDEV_PROJECT: "true"
+            LINES: "41"
+            MYSQL_HISTFILE: /mnt/ddev-global-cache/mysqlhistory/sardegna-turismo-d9-db/mysql_history
+            PGDATABASE: db
+            PGHOST: 127.0.0.1
+            PGPASSWORD: db
+            PGUSER: db
+            POSTGRES_DB: db
+            POSTGRES_PASSWORD: db
+            POSTGRES_USER: db
+            TZ: Europe/Rome
+            USER: luca.soda
+        healthcheck:
+            interval: 1s
+            retries: 70
+            start_interval: 1s
+            start_period: 2m0s
+            timeout: 1m10s
+        hostname: sardegna-turismo-d9-db
+        image: ddev/ddev-dbserver-mariadb-10.11:v1.24.6-sardegna-turismo-d9-built
+        labels:
+            com.ddev.app-type: drupal9
+            com.ddev.approot: /Users/luca.soda/Developer/ras-new/st_migrate_d9
+            com.ddev.platform: ddev
+            com.ddev.site-name: sardegna-turismo-d9
+        networks:
+            ddev_default: null
+            default: null
+        ports:
+            - host_ip: 127.0.0.1
+              mode: ingress
+              protocol: tcp
+              published: "50110"
+              target: 3306
+        restart: "no"
+        stop_grace_period: 1m0s
+        user: "501:20"
+        volumes:
+            - source: database
+              target: /var/lib/mysql
+              type: volume
+              volume:
+                nocopy: true
+            - bind:
+                create_host_path: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev
+              target: /mnt/ddev_config
+              type: bind
+            - bind:
+                create_host_path: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev/db_snapshots
+              target: /mnt/snapshots
+              type: bind
+            - source: ddev-global-cache
+              target: /mnt/ddev-global-cache
+              type: volume
+              volume: {}
+        working_dir: /home/luca.soda
+    web:
+        build:
+            args:
+                BASE_IMAGE: ddev/ddev-webserver:v1.24.6
+                DDEV_DATABASE: mariadb:10.11
+                DDEV_PHP_VERSION: "8.1"
+                gid: "20"
+                uid: "501"
+                username: luca.soda
+            context: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev/.webimageBuild
+            dockerfile: Dockerfile
+        cap_add:
+            - SYS_PTRACE
+        command:
+            - /pre-start.sh
+        container_name: ddev-sardegna-turismo-d9-web
+        environment:
+            COLUMNS: "73"
+            COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+            COREPACK_HOME: /mnt/ddev-global-cache/corepack
+            DDEV_APPROOT: /var/www/html
+            DDEV_COMPOSER_ROOT: /var/www/html
+            DDEV_DATABASE: mariadb:10.11
+            DDEV_DATABASE_FAMILY: mysql
+            DDEV_DOCROOT: docroot
+            DDEV_FILES_DIR: /var/www/html/docroot/sites/default/files
+            DDEV_FILES_DIRS: /var/www/html/docroot/sites/default/files
+            DDEV_GOARCH: arm64
+            DDEV_GOOS: darwin
+            DDEV_HOSTNAME: sardegna-turismo-d9.ddev.site
+            DDEV_MUTAGEN_ENABLED: "true"
+            DDEV_PHP_VERSION: "8.1"
+            DDEV_PRIMARY_URL: https://sardegna-turismo-d9.ddev.site
+            DDEV_PRIMARY_URL_PORT: "443"
+            DDEV_PRIMARY_URL_WITHOUT_PORT: https://sardegna-turismo-d9.ddev.site
+            DDEV_PROJECT: sardegna-turismo-d9
+            DDEV_PROJECT_TYPE: drupal9
+            DDEV_ROUTER_HTTP_PORT: "80"
+            DDEV_ROUTER_HTTPS_PORT: "443"
+            DDEV_SCHEME: https
+            DDEV_SITENAME: sardegna-turismo-d9
+            DDEV_TLD: ddev.site
+            DDEV_VERSION: v1.24.6
+            DDEV_WEB_ENTRYPOINT: /mnt/ddev_config/web-entrypoint.d
+            DDEV_WEBSERVER_TYPE: nginx-fpm
+            DDEV_XDEBUG_ENABLED: "false"
+            DDEV_XHPROF_MODE: prepend
+            DEPLOY_NAME: local
+            DOCKER_IP: 127.0.0.1
+            DOCROOT: docroot
+            DRUSH_OPTIONS_URI: https://sardegna-turismo-d9.ddev.site
+            HOST_DOCKER_INTERNAL_IP: ""
+            HTTP_EXPOSE: 80:80,8025:8025
+            HTTPS_EXPOSE: 443:80,8026:8025
+            IS_DDEV_PROJECT: "true"
+            LINES: "41"
+            MYSQL_HISTFILE: /mnt/ddev-global-cache/mysqlhistory/sardegna-turismo-d9-web/mysql_history
+            NODE_EXTRA_CA_CERTS: /mnt/ddev-global-cache/mkcert/rootCA.pem
+            PGDATABASE: db
+            PGHOST: db
+            PGPASSWORD: db
+            PGUSER: db
+            PHP_IDE_CONFIG: serverName=sardegna-turismo-d9.ddev.site
+            SSH_AUTH_SOCK: /home/.ssh-agent/socket
+            START_SCRIPT_TIMEOUT: "30"
+            TZ: Europe/Rome
+            USER: luca.soda
+            VIRTUAL_HOST: sardegna-turismo-d9.ddev.site
+            npm_config_cache: /mnt/ddev-global-cache/npm
+        external_links:
+            - ddev-router:sardegna-turismo-d9.ddev.site
+        healthcheck:
+            interval: 1s
+            retries: 70
+            start_interval: 1s
+            start_period: 2m0s
+            timeout: 1m10s
+        hostname: sardegna-turismo-d9-web
+        image: ddev/ddev-webserver:v1.24.6-sardegna-turismo-d9-built
+        labels:
+            com.ddev.app-type: drupal9
+            com.ddev.approot: /Users/luca.soda/Developer/ras-new/st_migrate_d9
+            com.ddev.platform: ddev
+            com.ddev.site-name: sardegna-turismo-d9
+        networks:
+            ddev_default: null
+            default: null
+        ports:
+            - host_ip: 127.0.0.1
+              mode: ingress
+              protocol: tcp
+              published: "50112"
+              target: 80
+            - host_ip: 127.0.0.1
+              mode: ingress
+              protocol: tcp
+              published: "50113"
+              target: 443
+            - host_ip: 127.0.0.1
+              mode: ingress
+              protocol: tcp
+              target: 8025
+        restart: "no"
+        user: "501:20"
+        volumes:
+            - source: project_mutagen
+              target: /var/www
+              type: volume
+              volume:
+                nocopy: true
+            - source: project_mutagen
+              target: /tmp/project_mutagen
+              type: volume
+              volume:
+                nocopy: true
+            - bind:
+                create_host_path: true
+              read_only: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev
+              target: /mnt/ddev_config
+              type: bind
+            - bind:
+                create_host_path: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.ddev/xhprof
+              target: /usr/local/bin/xhprof
+              type: bind
+            - bind:
+                create_host_path: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/docroot/sites/default/files
+              target: /var/www/html/docroot/sites/default/files
+              type: bind
+            - bind:
+                create_host_path: true
+              source: /Users/luca.soda/Developer/ras-new/st_migrate_d9/.git
+              target: /var/www/html/.git
+              type: bind
+            - source: ddev-global-cache
+              target: /mnt/ddev-global-cache
+              type: volume
+              volume: {}
+            - source: ddev-ssh-agent_socket_dir
+              target: /home/.ssh-agent
+              type: volume
+              volume: {}
+        working_dir: /var/www/html/
+    xhgui:
+        container_name: ddev-sardegna-turismo-d9-xhgui
+        depends_on:
+            db:
+                condition: service_started
+                required: true
+        environment:
+            DDEV_DATABASE_FAMILY: mysql
+            HTTP_EXPOSE: 8143:80
+            HTTPS_EXPOSE: 8142:80
+            TZ: Europe/Rome
+            VIRTUAL_HOST: sardegna-turismo-d9.ddev.site
+            XHGUI_PDO_PASS: db
+            XHGUI_PDO_USER: db
+            XHGUI_SAVE_HANDLER: pdo
+        image: ddev/ddev-xhgui:v1.24.6
+        labels:
+            com.ddev.approot: /Users/luca.soda/Developer/ras-new/st_migrate_d9
+            com.ddev.site-name: sardegna-turismo-d9
+        links:
+            - db
+        networks:
+            ddev_default: null
+            default: null
+        profiles:
+            - xhgui
+        restart: "no"
+volumes:
+    database:
+        external: true
+        name: sardegna-turismo-d9-mariadb
+    ddev-global-cache:
+        external: true
+        name: ddev-global-cache
+    ddev-ssh-agent_socket_dir:
+        external: true
+        name: ddev-ssh-agent_socket_dir
+    project_mutagen:
+        external: true
+        name: sardegna-turismo-d9_project_mutagen

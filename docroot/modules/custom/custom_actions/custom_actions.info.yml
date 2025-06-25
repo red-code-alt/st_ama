@@ -1,0 +1,5 @@
+name: 'Custom Actions'
+type: module
+description: 'Custom actions module for migration'
+core_version_requirement: ^8 || ^9
+package: Custom

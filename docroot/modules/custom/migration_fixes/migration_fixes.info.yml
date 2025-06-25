@@ -1,0 +1,5 @@
+name: 'Migration Fixes'
+type: module
+description: 'Custom fixes for D7 to D9 migration issues'
+core_version_requirement: ^9
+package: Custom

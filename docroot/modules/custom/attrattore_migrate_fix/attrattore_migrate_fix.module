@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Attrattore migration fix module.
+ */
+
+/**
+ * Implements hook_migrate_migration_plugins_alter().
+ */
+function attrattore_migrate_fix_migrate_migration_plugins_alter(array &$migrations) {
+  foreach ($migrations as $migration_id => &$migration) {
+    if (strpos($migration_id, 'd7_node_complete') !== FALSE && strpos($migration_id, 'attrattore') !== FALSE) {
+      if (isset($migration['process']['body'])) {
+        $migration['process']['body'] = [
+          'plugin' => 'sub_process',
+          'source' => 'body',
+          'process' => [
+            'value' => 'value',
+            'summary' => 'summary',
+            'format' => [
+              'plugin' => 'static_map',
+              'source' => 'format',
+              'default_value' => 'basic_html',
+              'bypass' => TRUE,
+              'map' => [
+                1 => 'plain_text',
+                2 => 'full_html',
+                3 => 'basic_html',
+                'filtered_html' => 'filtered_html',
+                'full_html' => 'full_html',
+                'plain_text' => 'plain_text',
+                'basic_html' => 'basic_html',
+                'restricted_html' => 'restricted_html',
+              ],
+            ],
+          ],
+        ];
+        
+        \Drupal::logger('attrattore_migrate_fix')->info('Applied text format mapping to migration: @migration_id', ['@migration_id' => $migration_id]);
+      }
+    }
+  }
+}

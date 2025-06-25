@@ -1,0 +1,104 @@
+#ddev-generated
+# If you remove the ddev-generated line above you
+# are responsible for maintaining this file. DDEV will not then
+# update it, for example if you add `additional_hostnames`, etc.
+
+http:
+  routers:
+    sardegna-turismo-d9-web-80-http:
+      entrypoints:
+        - http-80
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-web-80"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "sardegna-turismo-d9-redirectHttps"
+    sardegna-turismo-d9-web-8025-http:
+      entrypoints:
+        - http-8025
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-web-8025"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "sardegna-turismo-d9-redirectHttps"
+    sardegna-turismo-d9-xhgui-80-http:
+      entrypoints:
+        - http-8143
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-xhgui-80"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "sardegna-turismo-d9-redirectHttps"
+    
+    
+    
+    sardegna-turismo-d9-web-80-https:
+      entrypoints:
+        - http-443
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-web-80"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    sardegna-turismo-d9-web-8025-https:
+      entrypoints:
+        - http-8026
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-web-8025"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    
+    sardegna-turismo-d9-xhgui-80-https:
+      entrypoints:
+        - http-8142
+      rule: HostRegexp(`^sardegna-turismo-d9\.ddev\.site$`)
+      
+      service: "sardegna-turismo-d9-xhgui-80"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    
+
+  middlewares:
+    sardegna-turismo-d9-redirectHttps:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  services:
+    sardegna-turismo-d9-web-80:
+      loadbalancer:
+        servers:
+          - url: http://ddev-sardegna-turismo-d9-web:80
+        
+    sardegna-turismo-d9-web-8025:
+      loadbalancer:
+        servers:
+          - url: http://ddev-sardegna-turismo-d9-web:8025
+        
+    
+    
+    sardegna-turismo-d9-xhgui-80:
+      loadbalancer:
+        servers:
+          - url: http://ddev-sardegna-turismo-d9-xhgui:80
+        
+    
+    
+
+tls:
+  certificates:
+    - certFile: /mnt/ddev-global-cache/traefik/certs/sardegna-turismo-d9.crt
+      keyFile: /mnt/ddev-global-cache/traefik/certs/sardegna-turismo-d9.key
